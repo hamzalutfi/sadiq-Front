@@ -10,42 +10,42 @@ const mockProducts = [
   {
     id: "1",
     name: "بطاقة PlayStation Store بقيمة 20$",
-    price: "75 ر.س",
+    price: "75ل.س",
     image: "/placeholder.svg?width=300&height=350",
     category: "ألعاب",
   },
   {
     id: "2",
     name: "اشتراك Netflix Premium - شهر",
-    price: "40 ر.س",
+    price: "40ل.س",
     image: "/placeholder.svg?width=300&height=350",
     category: "ترفيه",
   },
   {
     id: "3",
     name: "Xbox Game Pass Ultimate - شهر",
-    price: "60 ر.س",
+    price: "60ل.س",
     image: "/placeholder.svg?width=300&height=350",
     category: "ألعاب",
   },
   {
     id: "4",
     name: "رصيد Steam بقيمة 10$",
-    price: "38 ر.س",
+    price: "38ل.س",
     image: "/placeholder.svg?width=300&height=350",
     category: "ألعاب",
   },
   {
     id: "5",
     name: "اشتراك Spotify Premium - 3 أشهر",
-    price: "50 ر.س",
+    price: "50ل.س",
     image: "/placeholder.svg?width=300&height=350",
     category: "موسيقى",
   },
   {
     id: "6",
     name: "بطاقة شحن موبايلي 50 ريال",
-    price: "50 ر.س",
+    price: "50ل.س",
     image: "/placeholder.svg?width=300&height=350",
     category: "اتصالات",
   },
@@ -81,11 +81,11 @@ export default function PopularProductsV3() {
           <CarouselContent className="-ml-4">
             {mockProducts.map((product) => (
               <CarouselItem
-                key={product.id}
+                key={product._id}
                 className="pl-4 basis-full xs:basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
               >
                 <Card className="group overflow-hidden rounded-xl border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col">
-                  <Link href={`/product/${product.id}`} className="block">
+                  <Link href={`/product/${product._id}`} className="block">
                     <div className="relative w-full h-48 bg-slate-100 rounded-t-lg overflow-hidden">
                       <Image src={product.image} alt={product.name} fill style={{ objectFit: "cover" }} />
                       <div className="absolute top-3 left-3 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full shadow">
@@ -103,7 +103,7 @@ export default function PopularProductsV3() {
                     <Button
                       size="sm"
                       className="w-full bg-primary hover:bg-primary-dark text-white font-semibold rounded-lg h-10"
-                      onClick={() => handleAddToCart(product.id)}
+                      onClick={() => handleAddToCart(product._id)}
                     >
                       <ShoppingCartIcon className="h-4 w-4 ml-2" />
                       أضف للسلة

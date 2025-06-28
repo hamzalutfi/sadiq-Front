@@ -17,16 +17,15 @@ export default function StorePage() {
   const { products, getProductsByCategory, searchProducts } = useProducts()
   const { addToCart } = useCart()
   const searchParams = useSearchParams()
-  
+
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("name")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000])
 
   // Get category from URL params
   const categoryFromUrl = searchParams.get("category")
-  
+
   useEffect(() => {
     if (categoryFromUrl) {
       setSelectedCategory(categoryFromUrl)
@@ -35,15 +34,13 @@ export default function StorePage() {
 
   // Filter and sort products
   const filteredProducts = products.filter(product => {
-    const matchesSearch = searchTerm === "" || 
+    const matchesSearch = searchTerm === "" ||
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
     const matchesCategory = selectedCategory === "all" || product.category === selectedCategory
-    
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
-    
-    return matchesSearch && matchesCategory && matchesPrice
+
+    return matchesSearch && matchesCategory
   })
 
   // Sort products
@@ -95,9 +92,9 @@ export default function StorePage() {
                 <SelectValue placeholder="اختر الفئة" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category === "all" ? "جميع الفئات" : category}
+                {categories.map((category, index) => (
+                  <SelectItem key={index} value={category}>
+                    {category === "all" ? "جميع الفئات" : category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -166,11 +163,10 @@ export default function StorePage() {
             </CardContent>
           </Card>
         ) : (
-          <div className={`grid gap-6 ${
-            viewMode === "grid" 
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
-              : "grid-cols-1"
-          }`}>
+          <div className={`grid gap-6 ${viewMode === "grid"
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            : "grid-cols-1"
+            }`}>
             {sortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

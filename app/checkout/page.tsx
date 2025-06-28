@@ -42,38 +42,35 @@ interface CartItem {
 
 const paymentMethods = [
   {
-    id: "credit-card",
-    name: "البطاقة الائتمانية",
+    id: "credit_card",
+    name: "بطاقة ائتمان",
     icon: CreditCard,
-    logos: ["Visa", "Mastercard", "Mada"],
   },
   {
-    id: "apple-pay",
-    name: "الهرم والفؤاد",
+    id: "transfer",
+    name: "الهرم او الفؤاد",
     icon: CreditCard,
-    logos: ["الهرم والفؤاد"],
   },
-  { 
-    id: "stc-pay", 
-    name: "واتساب", 
-    icon: CreditCard, 
-    logos: ["واتساب"] 
+  {
+    id: "whatsapp",
+    name: "واتساب",
+    icon: CreditCard,
   },
 ];
 
 export default function CheckoutPage() {
+  const { user } = useAuth();
   const { cartItems, getCartTotal, clearCart } = useCart();
-  const { user, isAuthenticated } = useAuth();
   const { createOrder, completeOrder } = useOrders();
-  const { toast } = useToast();
   const router = useRouter();
+  const { toast } = useToast();
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(paymentMethods[0].id);
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
     email: user?.email || "",
-    firstName: user?.name?.split(" ")[0] || "",
-    lastName: user?.name?.split(" ").slice(1).join(" ") || "",
+    firstName: user?.fullName?.split(" ")[0] || "",
+    lastName: user?.fullName?.split(" ").slice(1).join(" ") || "",
   });
 
   // Redirect if cart is empty
@@ -83,20 +80,24 @@ export default function CheckoutPage() {
     }
   }, [cartItems.length, router]);
 
-  // Update form data when user changes
+  // Pre-fill form with user data if available
   useEffect(() => {
     if (user) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         email: user.email || "",
-        firstName: user.name?.split(" ")[0] || "",
-        lastName: user.name?.split(" ").slice(1).join(" ") || "",
-      });
+        firstName: user.fullName?.split(" ")[0] || "",
+        lastName: user.fullName?.split(" ").slice(1).join(" ") || "",
+      }));
     }
   }, [user]);
 
-  const subtotal = getCartTotal();
+  const subtotal = cartItems.reduce((sum, item) => {
+    const itemPrice = item.price || (typeof item.product === 'object' ? item.product.price : 0) || 0;
+    return sum + (itemPrice * item.quantity);
+  }, 0);
   const shipping = 0; // For digital products
-  const total = subtotal + shipping;
+  const total: number = subtotal + shipping;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -120,9 +121,9 @@ export default function CheckoutPage() {
 
   const handlePayment = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+
     if (!validateForm()) return;
-    if (!isAuthenticated || !user) {
+    if (!user) {
       toast({
         title: "خطأ في المصادقة",
         description: "يرجى تسجيل الدخول لإتمام عملية الشراء",
@@ -131,31 +132,46 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Check if cart has items
+    if (cartItems.length === 0) {
+      toast({
+        title: "السلة فارغة",
+        description: "يرجى إضافة منتجات إلى السلة قبل إتمام عملية الشراء",
+        variant: "destructive"
+      });
+      router.push("/cart");
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
       // Create order
       const orderData = {
-        userId: user.id,
-        items: cartItems,
-        subtotal,
-        total,
-        status: "pending" as const,
+        shippingAddress: `${formData.firstName} ${formData.lastName}, ${formData.email}`,
+        billingAddress: `${formData.firstName} ${formData.lastName}, ${formData.email}`,
         paymentMethod: selectedPaymentMethod,
-        customerInfo: {
+        paymentDetails: {
+          method: selectedPaymentMethod,
           email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-        },
+          customerName: `${formData.firstName} ${formData.lastName}`
+        }
       };
 
-      const newOrder = await createOrder(orderData);
+      console.log('Creating order with data:', orderData);
+      const orderResult = await createOrder(orderData);
+
+      if (!orderResult.success || !orderResult.order) {
+        throw new Error(orderResult.message || 'فشل إنشاء الطلب');
+      }
+
+      const newOrder = orderResult.order;
 
       // Simulate payment processing
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Complete the order and generate delivery codes
-      completeOrder(newOrder.id);
+      completeOrder(newOrder._id);
 
       // Clear cart
       clearCart();
@@ -163,17 +179,17 @@ export default function CheckoutPage() {
       // Show success message
       toast({
         title: "تم إتمام الطلب بنجاح!",
-        description: `تم إنشاء طلبك برقم: ${newOrder.id}`,
+        description: `تم إنشاء طلبك برقم: ${newOrder._id}`,
       });
 
       // Redirect to order success page
-      router.push(`/order-success/${newOrder.id}`);
+      router.push(`/order-success/${newOrder._id}`);
 
     } catch (error) {
       console.error("Payment error:", error);
       toast({
         title: "خطأ في الدفع",
-        description: "حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مرة أخرى.",
+        description: error instanceof Error ? error.message : "حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مرة أخرى.",
         variant: "destructive"
       });
     } finally {
@@ -235,18 +251,23 @@ export default function CheckoutPage() {
                       <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                         {cartItems.map((item) => (
                           <div
-                            key={item.id}
+                            key={item._id}
                             className="flex items-center gap-3"
                           >
                             <div className="relative w-16 h-16 bg-slate-100 rounded-lg overflow-hidden">
-                              <Image src={item.image || "/placeholder.svg"} alt={item.name} fill style={{ objectFit: "cover" }} />
+                              <Image
+                                src={item.image || (typeof item.product === 'object' && typeof item.product.image === 'string' ? item.product.image : "/placeholder.svg")}
+                                alt={item.name || (typeof item.product === 'object' ? item.product.name : 'Product')}
+                                fill
+                                style={{ objectFit: "cover" }}
+                              />
                               <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
                                 {item.quantity}
                               </span>
                             </div>
                             <div className="flex-grow">
                               <p className="text-sm font-medium text-slate-700 leading-tight">
-                                {item.name}
+                                {item.name || (typeof item.product === 'object' ? item.product.name : 'Product')}
                               </p>
                               {item.optionLabel && (
                                 <p className="text-xs text-slate-500">
@@ -260,7 +281,7 @@ export default function CheckoutPage() {
                               )}
                             </div>
                             <p className="text-sm font-semibold text-slate-800">
-                              {(item.price * item.quantity).toFixed(2)} ر.س
+                              {((item.price || (typeof item.product === 'object' ? item.product.price : 0) || 0) * item.quantity).toFixed(2)}ل.س
                             </p>
                           </div>
                         ))}
@@ -273,20 +294,20 @@ export default function CheckoutPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-slate-600">
                     <span>الإجمالي الفرعي</span>
-                    <span>{subtotal.toFixed(2)} ر.س</span>
+                    <span>{subtotal.toFixed(2)}ل.س</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>الشحن</span>
                     <span>
                       {shipping === 0
                         ? "مجاني (منتجات رقمية)"
-                        : `${shipping.toFixed(2)} ر.س`}
+                        : `${shipping.toFixed(2)}ل.س`}
                     </span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-lg font-bold text-slate-900">
                     <span>الإجمالي للدفع</span>
-                    <span>{total.toFixed(2)} ر.س</span>
+                    <span>{total.toFixed(2)}ل.س</span>
                   </div>
                 </div>
               </CardContent>
@@ -373,34 +394,21 @@ export default function CheckoutPage() {
                       <Label
                         key={method.id}
                         htmlFor={method.id}
-                        className={`flex items-center space-x-3 space-x-reverse p-4 border rounded-lg cursor-pointer transition-all
-                                          ${
-                                            selectedPaymentMethod === method.id
-                                              ? "border-primary ring-2 ring-primary bg-primary/5"
-                                              : "border-slate-200 hover:border-slate-300"
-                                          }`}
+                        className={`flex items-center gap-3 space-x-3 space-x-reverse p-4 border rounded-lg cursor-pointer transition-all
+                                          ${selectedPaymentMethod === method.id
+                            ? "border-primary ring-2 ring-primary bg-primary/5"
+                            : "border-slate-200 hover:border-slate-300"
+                          }`}
                       >
                         <RadioGroupItem value={method.id} id={method.id} />
                         <method.icon className="h-6 w-6 text-slate-600" />
                         <span className="font-medium text-slate-700">
                           {method.name}
                         </span>
-                        <div className="mr-auto flex space-x-1 space-x-reverse">
-                          {method.logos.map((logo) => (
-                            <Image
-                              key={logo}
-                              src={`/placeholder.svg?width=30&height=20&query=${logo}+logo`}
-                              alt={logo}
-                              width={30}
-                              height={20}
-                              className="h-5 w-auto"
-                            />
-                          ))}
-                        </div>
                       </Label>
                     ))}
                   </RadioGroup>
-                  {selectedPaymentMethod === "credit-card" && (
+                  {selectedPaymentMethod === "credit_card" && (
                     <div className="mt-6 p-4 border border-dashed border-slate-300 rounded-lg bg-slate-50 text-center text-slate-500">
                       سيتم هنا عرض نموذج إدخال بيانات البطاقة بشكل آمن (مثل
                       Stripe Elements).
@@ -417,7 +425,7 @@ export default function CheckoutPage() {
               >
                 {isProcessing
                   ? "جاري المعالجة..."
-                  : `إتمام الدفع (${total.toFixed(2)} ر.س)`}
+                  : `إتمام الدفع (${total.toFixed(2)}ل.س)`}
               </Button>
               <p className="text-xs text-slate-500 text-center">
                 بالنقر على "إتمام الدفع"، فإنك توافق على{" "}

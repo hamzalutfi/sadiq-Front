@@ -279,11 +279,11 @@ function ProfileContent() {
                     <p className="text-sm text-slate-600">إجمالي الطلبات</p>
                   </div>
                   <div className="text-center p-4 bg-slate-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{totalSpent.toFixed(2)} ر.س</div>
+                    <div className="text-2xl font-bold text-green-600">{totalSpent.toFixed(2)}ل.س</div>
                     <p className="text-sm text-slate-600">إجمالي الإنفاق</p>
                   </div>
                   <div className="text-center p-4 bg-slate-50 rounded-lg">
-                    <div className="text-2xl font-bold text-amber-600">{averageOrderValue.toFixed(2)} ر.س</div>
+                    <div className="text-2xl font-bold text-amber-600">{averageOrderValue.toFixed(2)}ل.س</div>
                     <p className="text-sm text-slate-600">متوسط قيمة الطلب</p>
                   </div>
                 </div>

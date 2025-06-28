@@ -28,13 +28,13 @@ function OrdersContent() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
   const userOrders = user ? getUserOrders(user.id) : []
-  const sortedOrders = userOrders.sort((a, b) => 
+  const sortedOrders = userOrders.sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   )
 
   const filteredOrders = sortedOrders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesSearch = order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -123,7 +123,7 @@ function OrdersContent() {
                 {userOrders.length === 0 ? "لا توجد طلبات بعد" : "لا توجد نتائج"}
               </h3>
               <p className="text-slate-600 mb-6">
-                {userOrders.length === 0 
+                {userOrders.length === 0
                   ? "ابدأ التسوق الآن لإنشاء طلبك الأول"
                   : "جرب تغيير معايير البحث"
                 }
@@ -151,7 +151,7 @@ function OrdersContent() {
                           {getStatusText(order.status)}
                         </Badge>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-600 mb-4">
                         <div>
                           <span className="block text-slate-500">تاريخ الطلب:</span>
@@ -165,7 +165,7 @@ function OrdersContent() {
                         </div>
                         <div>
                           <span className="block text-slate-500">الإجمالي:</span>
-                          <span className="font-medium">{order.total.toFixed(2)} ر.س</span>
+                          <span className="font-medium">{order.pricing.total?.toFixed(2)}ل.س</span>
                         </div>
                         <div>
                           <span className="block text-slate-500">طريقة الدفع:</span>
@@ -185,7 +185,7 @@ function OrdersContent() {
                                 {item.name}
                               </p>
                               <p className="text-xs text-slate-500">
-                                الكمية: {item.quantity} × {item.price.toFixed(2)} ر.س
+                                الكمية: {item.quantity} × {item.price?.toFixed(2)}ل.س
                               </p>
                             </div>
                           </div>
@@ -200,7 +200,7 @@ function OrdersContent() {
 
                     {/* Actions */}
                     <div className="flex flex-col gap-2 lg:flex-shrink-0">
-                      <Link href={`/order-success/${order.id}`}>
+                      <Link href={`/order-success/${order._id}`}>
                         <Button variant="outline" size="sm" className="w-full">
                           <Eye className="h-4 w-4 ml-2" />
                           عرض التفاصيل

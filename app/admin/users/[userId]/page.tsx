@@ -83,7 +83,7 @@ export default function UserDetailPage() {
               <p className="text-sm text-muted-foreground flex items-center">
                 <CircleDollarSign className="h-4 w-4 ml-1" /> إجمالي الإنفاق
               </p>
-              <p className="text-2xl font-bold">{user.totalSpent.toFixed(2)} ر.س</p>
+              <p className="text-2xl font-bold">{user.totalSpent.toFixed(2)}ل.س</p>
             </div>
           </div>
 
@@ -115,7 +115,7 @@ export default function UserDetailPage() {
                         {order.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-left">{order.total.toFixed(2)} ر.س</TableCell>
+                    <TableCell className="text-left">{order.total.toFixed(2)}ل.س</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

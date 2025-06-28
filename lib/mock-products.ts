@@ -1,5 +1,5 @@
 export interface StoreProduct {
-  id: string
+  _id: string
   name: string
   image: string
   price: number
@@ -25,7 +25,7 @@ export interface StoreProduct {
 export const mockStoreProducts: StoreProduct[] = [
   // PlayStation
   {
-    id: "prod_101",
+    _id: "prod_101",
     name: "بطاقة PlayStation Store بقيمة 20$ (أمريكي)",
     image: "/placeholder.svg?width=300&height=400",
     price: 75,
@@ -36,7 +36,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_102",
+    _id: "prod_102",
     name: "بطاقة PlayStation Store بقيمة 50$ (أمريكي)",
     image: "/placeholder.svg?width=300&height=400",
     price: 180,
@@ -48,7 +48,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: true,
   },
   {
-    id: "prod_103",
+    _id: "prod_103",
     name: "اشتراك PlayStation Plus Essential (شهر)",
     image: "/placeholder.svg?width=300&height=400",
     price: 35,
@@ -59,7 +59,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_104",
+    _id: "prod_104",
     name: "اشتراك PlayStation Plus Extra (3 أشهر)",
     image: "/placeholder.svg?width=300&height=400",
     price: 150,
@@ -72,7 +72,7 @@ export const mockStoreProducts: StoreProduct[] = [
 
   // Xbox
   {
-    id: "prod_201",
+    _id: "prod_201",
     name: "Xbox Game Pass Ultimate (شهر)",
     image: "/placeholder.svg?width=300&height=400",
     price: 60,
@@ -83,7 +83,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_202",
+    _id: "prod_202",
     name: "بطاقة هدايا Xbox بقيمة 25$",
     image: "/placeholder.svg?width=300&height=400",
     price: 95,
@@ -96,7 +96,7 @@ export const mockStoreProducts: StoreProduct[] = [
 
   // Steam
   {
-    id: "prod_301",
+    _id: "prod_301",
     name: "رصيد Steam بقيمة 10$ (عالمي)",
     image: "/placeholder.svg?width=300&height=400",
     price: 38,
@@ -107,7 +107,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_302",
+    _id: "prod_302",
     name: "رصيد Steam بقيمة 20$ (عالمي)",
     image: "/placeholder.svg?width=300&height=400",
     price: 75,
@@ -120,7 +120,7 @@ export const mockStoreProducts: StoreProduct[] = [
 
   // Streaming
   {
-    id: "prod_401",
+    _id: "prod_401",
     name: "اشتراك Netflix Premium (شهر)",
     image: "/placeholder.svg?width=300&height=400",
     price: 45,
@@ -131,7 +131,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_402",
+    _id: "prod_402",
     name: "اشتراك Spotify Premium (3 أشهر)",
     image: "/placeholder.svg?width=300&height=400",
     price: 50,
@@ -142,7 +142,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_403",
+    _id: "prod_403",
     name: "اشتراك Shahid VIP (شهر)",
     image: "/placeholder.svg?width=300&height=400",
     price: 30,
@@ -155,7 +155,7 @@ export const mockStoreProducts: StoreProduct[] = [
 
   // Software & Others
   {
-    id: "prod_501",
+    _id: "prod_501",
     name: "مفتاح تفعيل Windows 11 Pro",
     image: "/placeholder.svg?width=300&height=400",
     price: 150,
@@ -166,7 +166,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: true,
   },
   {
-    id: "prod_502",
+    _id: "prod_502",
     name: "بطاقة هدايا iTunes بقيمة 15$",
     image: "/placeholder.svg?width=300&height=400",
     price: 60,
@@ -177,7 +177,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_503",
+    _id: "prod_503",
     name: "بطاقة Google Play بقيمة 10$ (أمريكي)",
     image: "/placeholder.svg?width=300&height=400",
     price: 40,
@@ -190,7 +190,7 @@ export const mockStoreProducts: StoreProduct[] = [
 
   // Telecom
   {
-    id: "prod_601",
+    _id: "prod_601",
     name: "بطاقة شحن موبايلي 50 ريال",
     image: "/placeholder.svg?width=300&height=400",
     price: 50,
@@ -201,7 +201,7 @@ export const mockStoreProducts: StoreProduct[] = [
     isNew: false,
   },
   {
-    id: "prod_602",
+    _id: "prod_602",
     name: "بطاقة شحن STC سوا 100 ريال",
     image: "/placeholder.svg?width=300&height=400",
     price: 100,

@@ -10,40 +10,40 @@ import { useAdmin } from "@/contexts/admin-context"
 
 export default function AdminDashboardPage() {
   const { getStats, getMonthlyStats, getAllOrders, getTopProducts } = useAdmin()
-  
+
   const stats = getStats()
   const monthlyStats = getMonthlyStats()
-  const recentOrders = getAllOrders().slice(0, 5)
+  const recentOrders = getAllOrders()?.slice(0, 5)
   const topProducts = getTopProducts()
 
   const statsCards = [
-    { 
-      title: "إجمالي الإيرادات (هذا الشهر)", 
-      value: `${stats.monthlyRevenue.toFixed(2)} ر.س`, 
-      change: stats.monthlyRevenue > 0 ? "+" : "", 
+    {
+      title: "إجمالي الإيرادات (هذا الشهر)",
+      value: `${stats?.monthlyRevenue?.toFixed(2) || '0.00'}ل.س`,
+      change: (stats?.monthlyRevenue || 0) > 0 ? "+" : "",
       icon: DollarSign,
-      trend: stats.monthlyRevenue > 0 ? "up" : "down"
+      trend: (stats?.monthlyRevenue || 0) > 0 ? "up" : "down"
     },
-    { 
-      title: "عدد الطلبات (هذا الشهر)", 
-      value: `${stats.monthlyOrders}`, 
-      change: stats.monthlyOrders > 0 ? "+" : "", 
+    {
+      title: "عدد الطلبات (هذا الشهر)",
+      value: `${stats?.monthlyOrders || 0}`,
+      change: (stats?.monthlyOrders || 0) > 0 ? "+" : "",
       icon: ShoppingCart,
-      trend: stats.monthlyOrders > 0 ? "up" : "down"
+      trend: (stats?.monthlyOrders || 0) > 0 ? "up" : "down"
     },
-    { 
-      title: "المستخدمون الجدد (هذا الشهر)", 
-      value: `${stats.monthlyUsers}`, 
-      change: stats.monthlyUsers > 0 ? "+" : "", 
+    {
+      title: "المستخدمون الجدد (هذا الشهر)",
+      value: `${stats?.monthlyUsers || 0}`,
+      change: (stats?.monthlyUsers || 0) > 0 ? "+" : "",
       icon: Users,
-      trend: stats.monthlyUsers > 0 ? "up" : "down"
+      trend: (stats?.monthlyUsers || 0) > 0 ? "up" : "down"
     },
-    { 
-      title: "متوسط قيمة الطلب", 
-      value: `${stats.averageOrderValue.toFixed(2)} ر.س`, 
-      change: stats.averageOrderValue > 0 ? "+" : "", 
+    {
+      title: "متوسط قيمة الطلب",
+      value: `${stats?.averageOrderValue?.toFixed(2) || '0.00'}ل.س`,
+      change: (stats?.averageOrderValue || 0) > 0 ? "+" : "",
       icon: BarChart2,
-      trend: stats.averageOrderValue > 0 ? "up" : "down"
+      trend: (stats?.averageOrderValue || 0) > 0 ? "up" : "down"
     },
   ]
 
@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="pl-2">
             <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={monthlyStats}>
+              <LineChart data={monthlyStats || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis
@@ -117,9 +117,9 @@ export default function AdminDashboardPage() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `${value} ر.س`}
+                  tickFormatter={(value) => `${value}ل.س`}
                 />
-                <Tooltip formatter={(value: number) => [`${value.toFixed(2)} ر.س`, "المبيعات"]} />
+                <Tooltip formatter={(value: number) => [`${value.toFixed(2)}ل.س`, "المبيعات"]} />
                 <Legend />
                 <Line type="monotone" dataKey="revenue" stroke="#0B8A3D" activeDot={{ r: 8 }} />
               </LineChart>
@@ -141,17 +141,17 @@ export default function AdminDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentOrders.map((order) => (
-                  <TableRow key={order.id}>
+                {recentOrders?.map((order) => (
+                  <TableRow key={order._id}>
                     <TableCell className="font-medium">
-                      {order.customerInfo.firstName} {order.customerInfo.lastName}
+                      Order #{order._id.slice(-6)}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(order.status)}>
                         {getStatusText(order.status)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-left">{order.total.toFixed(2)} ر.س</TableCell>
+                    <TableCell className="text-left">{order.pricing.total.toFixed(2)}ل.س</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -169,16 +169,16 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {topProducts.map((product, index) => (
+            {topProducts?.map((product, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex-grow">
-                  <p className="text-sm font-medium">{product.name}</p>
-                  <p className="text-xs text-slate-500">{product.revenue.toFixed(2)} ر.س إجمالي المبيعات</p>
+                  <p className="text-sm font-medium">{product.product.name}</p>
+                  <p className="text-xs text-slate-500">{product.revenue.toFixed(2)}ل.س إجمالي المبيعات</p>
                 </div>
-                <div className="text-sm font-semibold">{product.sales} مبيعة</div>
+                <div className="text-sm font-semibold">{product.quantity} مبيعة</div>
               </div>
             ))}
-            {topProducts.length === 0 && (
+            {(!topProducts || topProducts.length === 0) && (
               <div className="text-center py-8 text-slate-500">
                 لا توجد منتجات مبيعة بعد
               </div>

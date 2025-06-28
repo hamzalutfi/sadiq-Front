@@ -2,11 +2,11 @@ import type { LucideIcon } from "lucide-react"
 import { Tag, Percent, Zap, Gift } from "lucide-react"
 
 export interface Offer {
-  id: string
+  _id: string
   title: string
   description: string
   image: string
-  discountText: string // e.g., "خصم 20%", "وفر 50 ر.س", "عرض خاص"
+  discountText: string // e.g., "خصم 20%", "وفر 50ل.س", "عرض خاص"
   category: string
   validUntil?: string // e.g., "ينتهي في 30 يونيو"
   link: string
@@ -17,7 +17,7 @@ export interface Offer {
 
 export const mockOffers: Offer[] = [
   {
-    id: "offer_001",
+    _id: "offer_001",
     title: "خصم 25% على جميع بطاقات PlayStation",
     description: "اشحن رصيدك الآن واحصل على خصم فوري على جميع بطاقات PlayStation الأمريكية والسعودية.",
     image: "/placeholder.svg?width=500&height=300",
@@ -30,7 +30,7 @@ export const mockOffers: Offer[] = [
     themeColor: "bg-sky-600",
   },
   {
-    id: "offer_002",
+    _id: "offer_002",
     title: "اشتراك Netflix مجاني مع بطاقة Steam بقيمة 50$",
     description: "احصل على شهر مجاني من Netflix عند شرائك بطاقة Steam بقيمة 50 دولارًا أو أكثر.",
     image: "/placeholder.svg?width=500&height=300",
@@ -42,11 +42,11 @@ export const mockOffers: Offer[] = [
     themeColor: "bg-rose-600",
   },
   {
-    id: "offer_003",
-    title: "وفر 30 ر.س على اشتراكات Shahid VIP السنوية",
+    _id: "offer_003",
+    title: "وفر 30ل.س على اشتراكات Shahid VIP السنوية",
     description: "استمتع بأفضل المسلسلات والأفلام العربية مع خصم خاص على الباقة السنوية من شاهد.",
     image: "/placeholder.svg?width=500&height=300",
-    discountText: "وفر 30 ر.س",
+    discountText: "وفر 30ل.س",
     category: "اشتراكات الترفيه",
     validUntil: "ينتهي في 25 يوليو",
     link: "/store?category=streaming-subscriptions&platform=shahid",
@@ -54,7 +54,7 @@ export const mockOffers: Offer[] = [
     themeColor: "bg-emerald-600",
   },
   {
-    id: "offer_004",
+    _id: "offer_004",
     title: "عروض الصيف: تخفيضات تصل إلى 50% على برامج مختارة",
     description: "حدث جهازك بأفضل برامج الحماية والإنتاجية بأسعار لا تقاوم.",
     image: "/placeholder.svg?width=500&height=300",
@@ -66,7 +66,7 @@ export const mockOffers: Offer[] = [
     themeColor: "bg-amber-500",
   },
   {
-    id: "offer_005",
+    _id: "offer_005",
     title: "بطاقة Xbox Game Pass Ultimate + لعبة مجانية",
     description: "احصل على لعبة رقمية مجانية عند شرائك اشتراك Xbox Game Pass Ultimate لمدة 3 أشهر.",
     image: "/placeholder.svg?width=500&height=300",
@@ -79,7 +79,7 @@ export const mockOffers: Offer[] = [
     themeColor: "bg-lime-600",
   },
   {
-    id: "offer_006",
+    _id: "offer_006",
     title: "اشحن موبايلي واحصل على بيانات إضافية",
     description: "عروض شحن خاصة لعملاء موبايلي. بيانات أكثر بنفس السعر!",
     image: "/placeholder.svg?width=500&height=300",

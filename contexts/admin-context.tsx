@@ -1,310 +1,451 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { useAuth } from "@/contexts/auth-context"
-import { useOrders } from "@/contexts/orders-context"
-import { Order } from "@/contexts/orders-context"
-
-export interface AdminUser {
-  id: string
-  name: string
-  email: string
-  createdAt: string
-  totalOrders: number
-  status: "active" | "suspended"
-  lastLogin?: string
-}
-
-export interface AdminStats {
-  totalRevenue: number
-  totalOrders: number
-  totalUsers: number
-  averageOrderValue: number
-  monthlyRevenue: number
-  monthlyOrders: number
-  monthlyUsers: number
-}
+import { adminAPI, analyticsAPI, User, Order } from "@/lib/api"
+import { useAuth } from "./auth-context"
 
 interface AdminContextType {
-  // Admin authentication
+  users: User[]
+  allOrders: Order[]
+  dashboardStats: any
+  analytics: any
+  isLoading: boolean
+  error: string | null
   isAdmin: boolean
-  adminUser: AdminUser | null
-  
-  // Statistics
-  getStats: () => AdminStats
-  getMonthlyStats: () => { month: string; revenue: number; orders: number }[]
-  
-  // Order management
+  fetchUsers: () => Promise<void>
+  fetchAllOrders: () => Promise<void>
+  fetchDashboardStats: () => Promise<void>
+  fetchAnalytics: () => Promise<void>
+  getAllUsers: () => User[]
+  addUser: (userData: { fullName: string; email: string; password: string; phoneNumber?: string; role?: 'user' | 'admin' }) => Promise<{ success: boolean; message?: string; user?: User }>
+  updateUser: (id: string, userData: Partial<User>) => Promise<{ success: boolean; message?: string }>
+  deleteUser: (id: string) => Promise<{ success: boolean; message?: string }>
+  suspendUser: (id: string) => Promise<{ success: boolean; message?: string }>
+  activateUser: (id: string) => Promise<{ success: boolean; message?: string }>
+  updateOrderStatus: (id: string, status: Order['status']) => Promise<{ success: boolean; message?: string }>
+  processRefund: (id: string) => Promise<{ success: boolean; message?: string }>
+  getSalesReport: () => Promise<{ success: boolean; data?: any; message?: string }>
+  getStats: () => any
+  getMonthlyStats: () => any
   getAllOrders: () => Order[]
-  updateOrderStatus: (orderId: string, status: Order["status"]) => void
-  deleteOrder: (orderId: string) => void
-  
-  // User management
-  getAllUsers: () => AdminUser[]
-  addUser: (userData: Omit<AdminUser, "id" | "createdAt" | "totalOrders">) => void
-  updateUser: (userId: string, updates: Partial<AdminUser>) => void
-  deleteUser: (userId: string) => void
-  suspendUser: (userId: string) => void
-  activateUser: (userId: string) => void
-  
-  // Product analytics
-  getTopProducts: () => { name: string; sales: number; revenue: number }[]
+  getTopProducts: () => any[]
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined)
 
-// Local storage keys
-const ADMIN_USERS_STORAGE_KEY = "sadiqAdminUsers"
-
-// Helper functions for local storage
-const getStoredAdminUsers = (): AdminUser[] => {
-  if (typeof window === "undefined") return []
-  
-  try {
-    const stored = localStorage.getItem(ADMIN_USERS_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch (error) {
-    console.error("Error reading admin users from localStorage:", error)
-    return []
-  }
-}
-
-const setStoredAdminUsers = (users: AdminUser[]) => {
-  if (typeof window === "undefined") return
-  
-  try {
-    localStorage.setItem(ADMIN_USERS_STORAGE_KEY, JSON.stringify(users))
-  } catch (error) {
-    console.error("Error writing admin users to localStorage:", error)
-  }
-}
-
 export function AdminProvider({ children }: { children: ReactNode }) {
+  const [users, setUsers] = useState<User[]>([])
+  const [allOrders, setAllOrders] = useState<Order[]>([])
+  const [dashboardStats, setDashboardStats] = useState<any>(null)
+  const [analytics, setAnalytics] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { user, isAuthenticated } = useAuth()
-  const { orders, updateOrderStatus: updateOrderStatusInContext } = useOrders()
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
 
-  // Load admin users from localStorage on mount
-  useEffect(() => {
-    const storedUsers = getStoredAdminUsers()
-    setAdminUsers(storedUsers)
-  }, [])
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin'
 
-  // Save admin users to localStorage whenever they change
+  // Load admin data when user is authenticated and is admin
   useEffect(() => {
-    setStoredAdminUsers(adminUsers)
-  }, [adminUsers])
+    if (isAuthenticated && isAdmin) {
+      fetchDashboardStats()
+      fetchAnalytics()
+      fetchAllOrders()
+      fetchUsers()
+    } else {
+      setUsers([])
+      setAllOrders([])
+      setDashboardStats(null)
+      setAnalytics(null)
+    }
+  }, [isAuthenticated, isAdmin])
 
-  // Sync with auth users from localStorage
-  useEffect(() => {
-    const getStoredUsers = (): any[] => {
-      if (typeof window === "undefined") return []
-      
-      try {
-        const stored = localStorage.getItem("sadiqUsers")
-        return stored ? JSON.parse(stored) : []
-      } catch (error) {
-        console.error("Error reading users from localStorage:", error)
-        return []
+  const fetchUsers = async (): Promise<void> => {
+    if (!isAuthenticated || !isAdmin) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const response = await adminAPI.getAllUsers()
+      console.log('response', response)
+
+      if (response.success && response.data) {
+        setUsers(response.data)
+      } else {
+        setError(response.error || 'فشل تحميل المستخدمين')
       }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      setError('حدث خطأ أثناء تحميل المستخدمين')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchAllOrders = async (): Promise<void> => {
+    if (!isAuthenticated || !isAdmin) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const response = await adminAPI.getAllOrders()
+      if (response.success && response.data) {
+        setAllOrders(response.data)
+      } else {
+        setError(response.error || 'فشل تحميل الطلبات')
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error)
+      setError('حدث خطأ أثناء تحميل الطلبات')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchDashboardStats = async (): Promise<void> => {
+    if (!isAuthenticated || !isAdmin) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const response = await adminAPI.getDashboardStats()
+
+      if (response.success && response.data) {
+        setDashboardStats(response.data)
+      } else {
+        setError(response.error || 'فشل تحميل إحصائيات لوحة التحكم')
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error)
+      setError('حدث خطأ أثناء تحميل إحصائيات لوحة التحكم')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchAnalytics = async (): Promise<void> => {
+    if (!isAuthenticated || !isAdmin) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const [revenueRes, productsRes, customersRes, conversionRes] = await Promise.all([
+        analyticsAPI.getRevenue(),
+        analyticsAPI.getProducts(),
+        analyticsAPI.getCustomers(),
+        analyticsAPI.getConversion()
+      ])
+
+      const analyticsData = {
+        revenue: revenueRes.success ? revenueRes.data : null,
+        products: productsRes.success ? productsRes.data : null,
+        customers: customersRes.success ? customersRes.data : null,
+        conversion: conversionRes.success ? conversionRes.data : null
+      }
+
+      setAnalytics(analyticsData)
+    } catch (error) {
+      console.error('Error fetching analytics:', error)
+      setError('حدث خطأ أثناء تحميل التحليلات')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getAllUsers = (): User[] => {
+    return users
+  }
+
+  const addUser = async (userData: { fullName: string; email: string; password: string; phoneNumber?: string; role?: 'user' | 'admin' }): Promise<{ success: boolean; message?: string; user?: User }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بإضافة مستخدم' }
     }
 
-    const users = getStoredUsers()
-    if (users && users.length > 0) {
-      const authUsersAsAdmin: AdminUser[] = users.map((authUser: any) => ({
-        id: authUser.id,
-        name: authUser.name || "مستخدم",
-        email: authUser.email,
-        createdAt: authUser.createdAt || new Date().toISOString(),
-        totalOrders: orders ? orders.filter(order => order.userId === authUser.id).length : 0,
-        status: "active" as const,
-        lastLogin: authUser.lastLogin,
-      }))
-      
-      setAdminUsers(prev => {
-        // Merge with existing admin users, avoiding duplicates
-        const existingIds = new Set(prev.map(u => u.id))
-        const newUsers = authUsersAsAdmin.filter(u => !existingIds.has(u.id))
-        
-        if (newUsers.length > 0) {
-          return [...prev, ...newUsers]
-        }
-        return prev
-      })
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.addUser(userData)
+
+      if (response.success && response.data) {
+        setUsers(prev => [...prev, response.data!])
+        return { success: true, user: response.data }
+      } else {
+        return { success: false, message: response.error || 'فشل إضافة المستخدم' }
+      }
+    } catch (error) {
+      console.error('Error adding user:', error)
+      return { success: false, message: 'حدث خطأ أثناء إضافة المستخدم' }
+    } finally {
+      setIsLoading(false)
     }
-  }, [orders])
+  }
 
-  // Check if current user is admin (for demo, any authenticated user can be admin)
-  // Temporarily making this more permissive for testing
-  // const isAdmin = isAuthenticated && user !== null
-  
-  // For testing: allow admin access even without full auth
-  const isAdmin = true // Uncomment this line for testing without login
-  
-  // Debug logging
-  console.log("Admin Context Debug:", {
-    isAuthenticated,
-    user: user ? { id: user.id, name: user.name, email: user.email } : null,
-    isAdmin,
-    adminUsersCount: adminUsers.length
-  })
-  
-  const adminUser: AdminUser | null = user ? {
-    id: user.id,
-    name: user.name || "Admin",
-    email: user.email,
-    createdAt: user.createdAt || new Date().toISOString(),
-    totalOrders: orders ? orders.filter(order => order.userId === user.id).length : 0,
-    status: "active",
-  } : null
+  const updateUser = async (_id: string, userData: Partial<User>): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بتحديث المستخدمين' }
+    }
 
-  const getStats = (): AdminStats => {
-    const totalRevenue = orders ? orders.reduce((sum, order) => sum + order.total, 0) : 0
-    const totalOrders = orders ? orders.length : 0
-    const totalUsers = adminUsers.length
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.updateUser(_id, userData)
 
-    // Calculate monthly stats
-    const now = new Date()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
-    
-    const monthlyOrders = orders ? orders.filter(order => {
-      const orderDate = new Date(order.createdAt)
-      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear
-    }) : []
-    
-    const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.total, 0)
-    const monthlyUsers = adminUsers.filter(user => {
-      const userDate = new Date(user.createdAt)
-      return userDate.getMonth() === currentMonth && userDate.getFullYear() === currentYear
-    }).length
+      if (response.success && response.data) {
+        // Update user in the list
+        setUsers(prev => prev.map(user =>
+          user._id === _id ? response.data! : user
+        ))
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل تحديث المستخدم' }
+      }
+    } catch (error) {
+      console.error('Error updating user:', error)
+      return { success: false, message: 'حدث خطأ أثناء تحديث المستخدم' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
+  const deleteUser = async (_id: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بحذف المستخدم' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.deleteUser(_id)
+
+      if (response.success) {
+        setUsers(prev => prev.filter(user => user._id !== _id))
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل حذف المستخدم' }
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      return { success: false, message: 'حدث خطأ أثناء حذف المستخدم' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const suspendUser = async (_id: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بتعليق المستخدم' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.suspendUser(_id)
+
+      if (response.success) {
+        setUsers(prev => prev.map(user =>
+          user._id === _id ? { ...user, isSuspended: true, isActive: false } : user
+        ))
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل تعليق المستخدم' }
+      }
+    } catch (error) {
+      console.error('Error suspending user:', error)
+      return { success: false, message: 'حدث خطأ أثناء تعليق المستخدم' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const activateUser = async (_id: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بتفعيل المستخدم' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.activateUser(_id)
+
+      if (response.success) {
+        setUsers(prev => prev.map(user =>
+          user._id === _id ? { ...user, isSuspended: false, isActive: true } : user
+        ))
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل تفعيل المستخدم' }
+      }
+    } catch (error) {
+      console.error('Error activating user:', error)
+      return { success: false, message: 'حدث خطأ أثناء تفعيل المستخدم' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateOrderStatus = async (_id: string, status: Order['status']): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بتحديث حالة الطلبات' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.updateOrderStatus(_id, status)
+
+      if (response.success && response.data) {
+        // Update order in the list
+        setAllOrders(prev => prev.map(order =>
+          order._id === _id ? response.data! : order
+        ))
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل تحديث حالة الطلب' }
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error)
+      return { success: false, message: 'حدث خطأ أثناء تحديث حالة الطلب' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const processRefund = async (_id: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بمعالجة الاسترداد' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.processRefund(_id)
+
+      if (response.success) {
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل معالجة الاسترداد' }
+      }
+    } catch (error) {
+      console.error('Error processing refund:', error)
+      return { success: false, message: 'حدث خطأ أثناء معالجة الاسترداد' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getSalesReport = async (): Promise<{ success: boolean; data?: any; message?: string }> => {
+    if (!isAuthenticated || !isAdmin) {
+      return { success: false, message: 'غير مصرح لك بالوصول إلى تقارير المبيعات' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await adminAPI.getSalesReport()
+
+      if (response.success && response.data) {
+        return { success: true, data: response.data }
+      } else {
+        return { success: false, message: response.error || 'فشل تحميل تقرير المبيعات' }
+      }
+    } catch (error) {
+      console.error('Error fetching sales report:', error)
+      return { success: false, message: 'حدث خطأ أثناء تحميل تقرير المبيعات' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getStats = () => {
+    if (!dashboardStats) return null
     return {
-      totalRevenue,
-      totalOrders,
-      totalUsers,
-      averageOrderValue,
-      monthlyRevenue,
-      monthlyOrders: monthlyOrders.length,
-      monthlyUsers,
+      totalRevenue: dashboardStats.totalRevenue || 0,
+      totalOrders: dashboardStats.totalOrders || 0,
+      totalUsers: dashboardStats.totalUsers || 0,
+      totalProducts: dashboardStats.totalProducts || 0
     }
   }
 
   const getMonthlyStats = () => {
-    const months = []
-    const now = new Date()
-    
+    if (!analytics?.revenue) return []
+
+    // Generate monthly data for the last 12 months
+    const monthlyData = []
+    const currentDate = new Date()
+
     for (let i = 11; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthOrders = orders ? orders.filter(order => {
-        const orderDate = new Date(order.createdAt)
-        return orderDate.getMonth() === date.getMonth() && orderDate.getFullYear() === date.getFullYear()
-      }) : []
-      
-      months.push({
-        month: date.toLocaleDateString('ar-SA', { month: 'short' }),
-        revenue: monthOrders.reduce((sum, order) => sum + order.total, 0),
-        orders: monthOrders.length,
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+      const monthName = date.toLocaleDateString('ar-SA', { month: 'short' })
+
+      monthlyData.push({
+        month: monthName,
+        revenue: analytics.revenue.monthly || 0,
+        orders: analytics.revenue.monthlyOrders || 0
       })
     }
-    
-    return months
+
+    return monthlyData
   }
 
-  const getAllOrders = () => {
-    return orders ? orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []
+  const getAllOrders = (): Order[] => {
+    return allOrders
   }
 
-  const updateOrderStatus = (orderId: string, status: Order["status"]) => {
-    updateOrderStatusInContext(orderId, status)
-  }
+  const getTopProducts = (): any[] => {
+    if (!analytics?.products) return []
 
-  const deleteOrder = (orderId: string) => {
-    // In a real app, this would call an API
-    // For now, we'll just log it
-    console.log("Deleting order:", orderId)
-  }
+    // Extract top products from analytics or calculate from orders
+    const productSales = new Map<string, { product: any; quantity: number; revenue: number }>()
 
-  const getAllUsers = () => {
-    // Update total orders for each user
-    const usersWithUpdatedOrders = adminUsers.map(user => ({
-      ...user,
-      totalOrders: orders ? orders.filter(order => order.userId === user.id).length : 0,
-    }))
-    
-    return usersWithUpdatedOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }
+    allOrders.forEach(order => {
+      order.items.forEach(item => {
+        const productId = typeof item.product === 'string' ? item.product : item.product._id
+        const existing = productSales.get(productId)
 
-  const addUser = (userData: Omit<AdminUser, "id" | "createdAt" | "totalOrders">) => {
-    const newUser: AdminUser = {
-      ...userData,
-      id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date().toISOString(),
-      totalOrders: 0,
-    }
-    setAdminUsers(prev => [...prev, newUser])
-  }
-
-  const updateUser = (userId: string, updates: Partial<AdminUser>) => {
-    setAdminUsers(prev => prev.map(user => 
-      user.id === userId ? { ...user, ...updates } : user
-    ))
-  }
-
-  const deleteUser = (userId: string) => {
-    setAdminUsers(prev => prev.filter(user => user.id !== userId))
-  }
-
-  const suspendUser = (userId: string) => {
-    updateUser(userId, { status: "suspended" })
-  }
-
-  const activateUser = (userId: string) => {
-    updateUser(userId, { status: "active" })
-  }
-
-  const getTopProducts = () => {
-    // Count product sales from orders
-    const productSales: { [key: string]: { sales: number; revenue: number } } = {}
-    
-    if (orders) {
-      orders.forEach(order => {
-        order.items.forEach(item => {
-          if (!productSales[item.name]) {
-            productSales[item.name] = { sales: 0, revenue: 0 }
-          }
-          productSales[item.name].sales += item.quantity
-          productSales[item.name].revenue += item.price * item.quantity
-        })
+        if (existing) {
+          existing.quantity += item.quantity
+          existing.revenue += item.quantity * item.price
+        } else {
+          productSales.set(productId, {
+            product: typeof item.product === 'string' ? { _id: productId, name: item.name } : item.product,
+            quantity: item.quantity,
+            revenue: item.quantity * item.price
+          })
+        }
       })
-    }
-    
-    return Object.entries(productSales)
-      .map(([name, data]) => ({ name, sales: data.sales, revenue: data.revenue }))
-      .sort((a, b) => b.sales - a.sales)
+    })
+
+    // Sort by revenue and return top 10
+    return Array.from(productSales.values())
+      .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10)
   }
 
+  const value: AdminContextType = {
+    users,
+    allOrders,
+    dashboardStats,
+    analytics,
+    isLoading,
+    error,
+    isAdmin,
+    fetchUsers,
+    fetchAllOrders,
+    fetchDashboardStats,
+    fetchAnalytics,
+    getAllUsers,
+    addUser,
+    updateUser,
+    deleteUser,
+    suspendUser,
+    activateUser,
+    updateOrderStatus,
+    processRefund,
+    getSalesReport,
+    getStats,
+    getMonthlyStats,
+    getAllOrders,
+    getTopProducts
+  }
+
   return (
-    <AdminContext.Provider
-      value={{
-        isAdmin,
-        adminUser,
-        getStats,
-        getMonthlyStats,
-        getAllOrders,
-        updateOrderStatus,
-        deleteOrder,
-        getAllUsers,
-        addUser,
-        updateUser,
-        deleteUser,
-        suspendUser,
-        activateUser,
-        getTopProducts,
-      }}
-    >
+    <AdminContext.Provider value={value}>
       {children}
     </AdminContext.Provider>
   )
@@ -313,7 +454,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 export function useAdmin() {
   const context = useContext(AdminContext)
   if (context === undefined) {
-    throw new Error("useAdmin must be used within an AdminProvider")
+    throw new Error('useAdmin must be used within an AdminProvider')
   }
   return context
 } 

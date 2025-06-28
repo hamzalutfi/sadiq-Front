@@ -179,7 +179,7 @@ export default function OrderDetailPage() {
             <p className="text-slate-500 mb-0.5">الإجمالي:</p>
             <p className="font-medium text-slate-700 flex items-center">
               <CircleDollarSign className="h-4 w-4 ml-1 text-primary" />
-              {order.totalAmount.toFixed(2)} ر.س
+              {order.totalAmount.toFixed(2)}ل.س
             </p>
           </div>
           <div className="bg-slate-50 p-3 rounded-md">
@@ -205,7 +205,7 @@ export default function OrderDetailPage() {
                     </Link>
                     {item.optionLabel && <p className="text-xs text-slate-500">الخيار: {item.optionLabel}</p>}
                     <p className="text-sm text-slate-600">
-                      الكمية: {item.quantity} | السعر: {item.price.toFixed(2)} ر.س
+                      الكمية: {item.quantity} | السعر: {item.price.toFixed(2)}ل.س
                     </p>
                     {item.digitalCode && (order.status === "مكتمل" || order.status === "تم التوصيل") ? (
                       <DigitalCodeDisplay code={item.digitalCode} />

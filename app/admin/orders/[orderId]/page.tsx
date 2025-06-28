@@ -106,15 +106,15 @@ export default function OrderDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">الإجمالي الفرعي</p>
-                  <p className="font-medium">{order.subtotal.toFixed(2)} ر.س</p>
+                  <p className="font-medium">{order.subtotal.toFixed(2)}ل.س</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">الضريبة</p>
-                  <p className="font-medium">{order.tax.toFixed(2)} ر.س</p>
+                  <p className="font-medium">{order.tax.toFixed(2)}ل.س</p>
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-sm text-slate-500">الإجمالي النهائي</p>
-                  <p className="text-xl font-bold text-primary">{order.total.toFixed(2)} ر.س</p>
+                  <p className="text-xl font-bold text-primary">{order.total.toFixed(2)}ل.س</p>
                 </div>
               </div>
             </CardContent>
@@ -149,8 +149,8 @@ export default function OrderDetailPage() {
                         </div>
                       </TableCell>
                       <TableCell>{item.quantity}</TableCell>
-                      <TableCell className="text-left">{item.price.toFixed(2)} ر.س</TableCell>
-                      <TableCell className="text-left">{(item.price * item.quantity).toFixed(2)} ر.س</TableCell>
+                      <TableCell className="text-left">{item.price.toFixed(2)}ل.س</TableCell>
+                      <TableCell className="text-left">{(item.price * item.quantity).toFixed(2)}ل.س</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

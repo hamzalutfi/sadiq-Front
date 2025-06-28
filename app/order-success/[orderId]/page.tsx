@@ -103,7 +103,7 @@ function OrderSuccessContent() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-slate-500">رقم الطلب:</span>
-                    <p className="font-medium">{order.id}</p>
+                    <p className="font-medium">{order._id}</p>
                   </div>
                   <div>
                     <span className="text-slate-500">تاريخ الطلب:</span>
@@ -127,7 +127,7 @@ function OrderSuccessContent() {
                   <h4 className="font-semibold mb-3">المنتجات المطلوبة:</h4>
                   <div className="space-y-3">
                     {order.items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div key={item._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                         <div className="relative w-16 h-16 bg-slate-100 rounded-lg overflow-hidden">
                           <Image src={item.image || "/placeholder.svg"} alt={item.name} fill style={{ objectFit: "cover" }} />
                           <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
@@ -145,7 +145,7 @@ function OrderSuccessContent() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-slate-800">
-                            {(item.price * item.quantity).toFixed(2)} ر.س
+                            {(item.price * item.quantity).toFixed(2)}ل.س
                           </p>
                           {item.code && (
                             <p className="text-xs text-green-600 mt-1">تم التسليم</p>
@@ -159,7 +159,7 @@ function OrderSuccessContent() {
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">الإجمالي الفرعي:</span>
-                    <span className="font-medium">{order.subtotal.toFixed(2)} ر.س</span>
+                    <span className="font-medium">{order.pricing.subtotal.toFixed(2)}ل.س</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600">الشحن:</span>
@@ -167,14 +167,14 @@ function OrderSuccessContent() {
                   </div>
                   <div className="flex justify-between items-center text-lg font-bold text-slate-900 border-t pt-2">
                     <span>الإجمالي:</span>
-                    <span>{order.total.toFixed(2)} ر.س</span>
+                    <span>{order.pricing.total.toFixed(2)}ل.س</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Customer Information */}
-            <Card className="shadow-lg">
+            {/* <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <User className="h-5 w-5 ml-2" />
@@ -195,7 +195,7 @@ function OrderSuccessContent() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
           {/* Sidebar */}

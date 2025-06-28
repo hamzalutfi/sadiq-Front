@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/accordion"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { Separator } from "@/components/ui/separator"
-import { 
-  ShoppingCart, 
-  Star, 
-  CheckCircle, 
-  XCircle, 
-  Info, 
+import {
+  ShoppingCart,
+  Star,
+  CheckCircle,
+  XCircle,
+  Info,
   ShieldCheck,
   Check,
   Heart,
@@ -41,7 +41,7 @@ export default function ProductDetailPage() {
   const { getProductById } = useProducts()
   const { addToCart, cartItems } = useCart()
   const { toast } = useToast()
-  
+
   const productId = params.id as string
   const product = getProductById(productId)
 
@@ -79,26 +79,15 @@ export default function ProductDetailPage() {
   const currentAvailability = currentOption?.availability || product.availability
 
   // Check if product is in cart
-  const isAdded = cartItems.some(item => item.id === product.id)
+  const isAdded = cartItems?.some(item => item._id === product._id)
 
   const handleOptionChange = (sku: string) => {
     setSelectedOptionSku(sku)
   }
 
   const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.name,
-      price: currentPrice,
-      image: product.image,
-      quantity: 1,
-      category: product.category,
-      optionLabel: currentOption?.label,
-      platform: product.details?.platform,
-    }
+    addToCart(product._id, 1)
 
-    addToCart(cartItem)
-    
     toast({
       title: "تم إضافة المنتج إلى السلة",
       description: `${product.name} تم إضافته إلى سلة التسوق بنجاح`,
@@ -188,9 +177,9 @@ export default function ProductDetailPage() {
 
             <div className="bg-white p-6 rounded-xl shadow-lg border border-primary/20">
               <div className="flex items-baseline space-x-3 space-x-reverse mb-2">
-                <span className="text-4xl font-bold text-primary">{currentPrice.toFixed(2)} ر.س</span>
+                <span className="text-4xl font-bold text-primary">{currentPrice.toFixed(2)}ل.س</span>
                 {product.originalPrice && currentPrice && product.originalPrice > currentPrice && (
-                  <span className="text-xl text-slate-400 line-through">{product.originalPrice.toFixed(2)} ر.س</span>
+                  <span className="text-xl text-slate-400 line-through">{product.originalPrice.toFixed(2)}ل.س</span>
                 )}
               </div>
               {currentAvailability === "متوفر" && (
@@ -227,7 +216,7 @@ export default function ProductDetailPage() {
                         disabled={opt.availability === "نفد المخزون"}
                         className="py-2.5 text-base"
                       >
-                        {opt.label} ({opt.price.toFixed(2)} ر.س) {opt.availability === "نفد المخزون" ? "- نفد" : ""}
+                        {opt.label} ({opt.price.toFixed(2)}ل.س) {opt.availability === "نفد المخزون" ? "- نفد" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -238,11 +227,10 @@ export default function ProductDetailPage() {
             <div className="pt-4 space-y-3">
               <Button
                 size="xl"
-                className={`w-full h-14 text-lg font-semibold rounded-lg shadow-lg hover:shadow-primary/40 transition-all duration-300 ${
-                  isAdded 
-                    ? "bg-green-600 hover:bg-green-700 text-white" 
-                    : "bg-primary hover:bg-primary-dark text-white"
-                }`}
+                className={`w-full h-14 text-lg font-semibold rounded-lg shadow-lg hover:shadow-primary/40 transition-all duration-300 ${isAdded
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-primary hover:bg-primary-dark text-white"
+                  }`}
                 onClick={handleAddToCart}
                 disabled={!isProductAvailable}
               >

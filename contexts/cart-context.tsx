@@ -1,124 +1,226 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { StoreProduct } from "@/lib/mock-products"
-
-export interface CartItem {
-  id: string
-  name: string
-  image: string
-  price: number
-  quantity: number
-  optionLabel?: string
-  platform?: string
-  category?: string
-}
+import { cartAPI, Cart, CartItem } from "@/lib/api"
+import { useAuth } from "./auth-context"
 
 interface CartContextType {
+  cart: Cart | null
   cartItems: CartItem[]
-  addToCart: (product: StoreProduct, quantity?: number) => void
-  removeFromCart: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
-  clearCart: () => void
-  getCartTotal: () => number
+  isLoading: boolean
+  addToCart: (productId: string, quantity: number) => Promise<{ success: boolean; message?: string }>
+  updateCartItem: (productId: string, quantity: number) => Promise<{ success: boolean; message?: string }>
+  updateQuantity: (productId: string, quantity: number) => Promise<{ success: boolean; message?: string }>
+  removeFromCart: (productId: string) => Promise<{ success: boolean; message?: string }>
+  clearCart: () => Promise<{ success: boolean; message?: string }>
+  applyCoupon: (couponCode: string) => Promise<{ success: boolean; message?: string }>
+  removeCoupon: () => Promise<{ success: boolean; message?: string }>
+  refreshCart: () => Promise<void>
   getCartCount: () => number
+  getCartTotal: () => number
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [cart, setCart] = useState<Cart | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const { isAuthenticated } = useAuth()
 
-  // Load cart from localStorage on mount
+  // Load cart when user is authenticated
   useEffect(() => {
-    const savedCart = localStorage.getItem("sadiqCart")
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart))
-      } catch (error) {
-        console.error("Error loading cart from localStorage:", error)
-      }
+    if (isAuthenticated) {
+      refreshCart()
+    } else {
+      setCart(null)
     }
-  }, [])
+  }, [isAuthenticated])
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("sadiqCart", JSON.stringify(cartItems))
-    
-    // Update cart count for header
-    const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-    localStorage.setItem("sadiqCartCount", totalQuantity.toString())
-    window.dispatchEvent(new Event("storage"))
-  }, [cartItems])
+  const refreshCart = async (): Promise<void> => {
+    if (!isAuthenticated) return
 
-  const addToCart = (product: StoreProduct, quantity: number = 1) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id)
-      
-      if (existingItem) {
-        // If item exists, increase quantity
-        return prevItems.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        )
+    try {
+      setIsLoading(true)
+      const response = await cartAPI.get()
+      if (response.success && response.data) {
+        setCart(response.data)
       } else {
-        // If item doesn't exist, add new item
-        const newCartItem: CartItem = {
-          id: product.id,
-          name: product.name,
-          image: product.image,
-          price: product.price,
-          quantity,
-          platform: product.platform,
-          category: product.category,
-        }
-        return [...prevItems, newCartItem]
+        setCart(null)
       }
-    })
-  }
-
-  const removeFromCart = (productId: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId))
-  }
-
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity < 1) {
-      removeFromCart(productId)
-      return
+    } catch (error) {
+      console.error('Error loading cart:', error)
+      setCart(null)
+    } finally {
+      setIsLoading(false)
     }
-    
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === productId ? { ...item, quantity } : item
-      )
-    )
   }
 
-  const clearCart = () => {
-    setCartItems([])
+  const addToCart = async (productId: string, quantity: number): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لإضافة المنتجات إلى السلة' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await cartAPI.addItem({ productId, quantity })
+
+      if (response.success && response.data) {
+        setCart(response.data)
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل إضافة المنتج إلى السلة' }
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      return { success: false, message: 'حدث خطأ أثناء إضافة المنتج إلى السلة' }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const getCartTotal = () => {
-    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const updateCartItem = async (productId: string, quantity: number): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لتحديث السلة' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await cartAPI.updateItem(productId, quantity)
+
+      if (response.success && response.data) {
+        setCart(response.data)
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل تحديث المنتج في السلة' }
+      }
+    } catch (error) {
+      console.error('Error updating cart item:', error)
+      return { success: false, message: 'حدث خطأ أثناء تحديث المنتج في السلة' }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const getCartCount = () => {
-    return cartItems.reduce((sum, item) => sum + item.quantity, 0)
+  const removeFromCart = async (productId: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لحذف المنتجات من السلة' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await cartAPI.removeItem(productId)
+
+      if (response.success && response.data) {
+        setCart(response.data)
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل حذف المنتج من السلة' }
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error)
+      return { success: false, message: 'حدث خطأ أثناء حذف المنتج من السلة' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const clearCart = async (): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لتفريغ السلة' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await cartAPI.clear()
+
+      if (response.success) {
+        setCart(null)
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل تفريغ السلة' }
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error)
+      return { success: false, message: 'حدث خطأ أثناء تفريغ السلة' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const applyCoupon = async (couponCode: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لتطبيق الكوبون' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await cartAPI.applyCoupon(couponCode)
+
+      if (response.success && response.data) {
+        setCart(response.data)
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل تطبيق الكوبون' }
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error)
+      return { success: false, message: 'حدث خطأ أثناء تطبيق الكوبون' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const removeCoupon = async (): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لإزالة الكوبون' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await cartAPI.removeCoupon()
+
+      if (response.success && response.data) {
+        setCart(response.data)
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل إزالة الكوبون' }
+      }
+    } catch (error) {
+      console.error('Error removing coupon:', error)
+      return { success: false, message: 'حدث خطأ أثناء إزالة الكوبون' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getCartCount = (): number => {
+    if (!cart) return 0
+    return cart.items.reduce((count, item) => count + item.quantity, 0)
+  }
+
+  const getCartTotal = (): number => {
+    if (!cart) return 0
+    return cart.items.reduce((total, item) => total + item.quantity * item.product.price, 0)
+  }
+
+  const value: CartContextType = {
+    cart,
+    cartItems: cart?.items || [],
+    isLoading,
+    addToCart,
+    updateCartItem,
+    updateQuantity: updateCartItem,
+    removeFromCart,
+    clearCart,
+    applyCoupon,
+    removeCoupon,
+    refreshCart,
+    getCartCount,
+    getCartTotal
   }
 
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        getCartTotal,
-        getCartCount,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   )
@@ -127,7 +229,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 export function useCart() {
   const context = useContext(CartContext)
   if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider")
+    throw new Error('useCart must be used within a CartProvider')
   }
   return context
 } 

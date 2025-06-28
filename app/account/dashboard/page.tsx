@@ -49,7 +49,7 @@ function DashboardContent() {
     ...orders.slice(0, 3).map(order => ({
       type: "order",
       title: `طلب جديد #${order.id}`,
-      description: `قيمة الطلب: ${order.total.toFixed(2)} ر.س`,
+      description: `قيمة الطلب: ${order.total.toFixed(2)}ل.س`,
       date: new Date(order.createdAt).toLocaleDateString('ar-SA'),
       status: order.status
     }))
@@ -106,7 +106,7 @@ function DashboardContent() {
               <DollarSign className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{totalSpent.toFixed(2)} ر.س</div>
+              <div className="text-2xl font-bold text-primary">{totalSpent.toFixed(2)}ل.س</div>
               <p className="text-xs text-muted-foreground">جميع الطلبات</p>
             </CardContent>
           </Card>
@@ -140,7 +140,7 @@ function DashboardContent() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold">{order.total.toFixed(2)} ر.س</div>
+                          <div className="font-semibold">{order.total.toFixed(2)}ل.س</div>
                           <Badge 
                             variant={
                               order.status === "مكتمل" ? "default" : 
@@ -207,7 +207,7 @@ function DashboardContent() {
                 <CardContent className="space-y-3">
                   <div className="text-lg font-semibold">{cartItems.length} منتج</div>
                   <div className="text-sm text-slate-600">
-                    الإجمالي: {getCartTotal().toFixed(2)} ر.س
+                    الإجمالي: {getCartTotal().toFixed(2)}ل.س
                   </div>
                   <Link href="/cart" className="block">
                     <Button size="sm" className="w-full">

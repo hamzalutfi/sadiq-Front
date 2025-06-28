@@ -78,9 +78,9 @@ export default function ReportsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRevenue.toFixed(2)} ر.س</div>
+            <div className="text-2xl font-bold">{stats.totalRevenue.toFixed(2)}ل.س</div>
             <p className="text-xs text-muted-foreground">
-              {stats.monthlyRevenue.toFixed(2)} ر.س هذا الشهر
+              {stats.monthlyRevenue.toFixed(2)}ل.س هذا الشهر
             </p>
           </CardContent>
         </Card>
@@ -117,7 +117,7 @@ export default function ReportsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageOrderValue.toFixed(2)} ر.س</div>
+            <div className="text-2xl font-bold">{stats.averageOrderValue.toFixed(2)}ل.س</div>
             <p className="text-xs text-muted-foreground">
               متوسط قيمة الطلب الواحد
             </p>
@@ -138,7 +138,7 @@ export default function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value: number) => [`${value.toFixed(2)} ر.س`, "الإيرادات"]} />
+                <Tooltip formatter={(value: number) => [`${value.toFixed(2)}ل.س`, "الإيرادات"]} />
                 <Line type="monotone" dataKey="revenue" stroke="#0B8A3D" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
@@ -184,7 +184,7 @@ export default function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip formatter={(value: string) => [`${value} ر.س`, "الإيرادات"]} />
+                <Tooltip formatter={(value: string) => [`${value}ل.س`, "الإيرادات"]} />
                 <Bar dataKey="revenue" fill="#0B8A3D" />
               </BarChart>
             </ResponsiveContainer>
@@ -210,7 +210,7 @@ export default function ReportsPage() {
                     </div>
                   </div>
                   <Badge variant="secondary">
-                    {product.revenue.toFixed(2)} ر.س
+                    {product.revenue.toFixed(2)}ل.س
                   </Badge>
                 </div>
               ))}
@@ -240,7 +240,7 @@ export default function ReportsPage() {
                       طلب جديد من {order.customerInfo.firstName} {order.customerInfo.lastName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {new Date(order.createdAt).toLocaleDateString('ar-SA')} - {order.total.toFixed(2)} ر.س
+                      {new Date(order.createdAt).toLocaleDateString('ar-SA')} - {order.total.toFixed(2)}ل.س
                     </p>
                   </div>
                 </div>

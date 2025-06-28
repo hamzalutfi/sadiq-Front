@@ -38,15 +38,15 @@ export default function OrderManagementPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
   const allOrders = getAllOrders()
-  
+
   const filteredOrders = allOrders.filter((order) => {
-    const matchesSearch = 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerInfo.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${order.customerInfo.firstName} ${order.customerInfo.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-    
+    const matchesSearch =
+      order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.user?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -100,12 +100,12 @@ export default function OrderManagementPage() {
     const csvContent = [
       ["رقم الطلب", "العميل", "البريد الإلكتروني", "التاريخ", "الحالة", "الإجمالي"],
       ...filteredOrders.map(order => [
-        order.id,
-        `${order.customerInfo.firstName} ${order.customerInfo.lastName}`,
-        order.customerInfo.email,
+        order._id,
+        order.user?.fullName,
+        order.user?.email,
         new Date(order.createdAt).toLocaleDateString('ar-SA'),
         getStatusText(order.status),
-        `${order.total.toFixed(2)} ر.س`
+        `${order.pricing.total.toFixed(2)}ل.س`
       ])
     ].map(row => row.join(',')).join('\n')
 
@@ -151,7 +151,7 @@ export default function OrderManagementPage() {
             تصدير إلى CSV
           </Button>
         </div>
-        
+
         <div className="border rounded-lg">
           <Table>
             <TableHeader>
@@ -176,12 +176,12 @@ export default function OrderManagementPage() {
                 </TableRow>
               ) : (
                 filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
+                  <TableRow key={order._id}>
+                    <TableCell className="font-medium">{order._id}</TableCell>
                     <TableCell>
-                      {order.customerInfo.firstName} {order.customerInfo.lastName}
+                      {order.user?.fullName}
                     </TableCell>
-                    <TableCell>{order.customerInfo.email}</TableCell>
+                    <TableCell>{order.user?.email}</TableCell>
                     <TableCell>
                       {new Date(order.createdAt).toLocaleDateString('ar-SA')}
                     </TableCell>
@@ -190,7 +190,7 @@ export default function OrderManagementPage() {
                         {getStatusText(order.status)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-left">{order.total.toFixed(2)} ر.س</TableCell>
+                    <TableCell className="text-left">{order.pricing.total.toFixed(2)}ل.س</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -202,23 +202,23 @@ export default function OrderManagementPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>إجراءات</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
-                            <Link href={`/order-success/${order.id}`}>
+                            <Link href={`/order-success/${order._id}`}>
                               <Eye className="h-4 w-4 ml-2" />
                               عرض التفاصيل
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel>تغيير الحالة</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleStatusChange(order.id, "pending")}>
+                          <DropdownMenuItem onClick={() => handleStatusChange(order._id, "pending")}>
                             في الانتظار
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(order.id, "processing")}>
+                          <DropdownMenuItem onClick={() => handleStatusChange(order._id, "processing")}>
                             قيد المعالجة
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(order.id, "completed")}>
+                          <DropdownMenuItem onClick={() => handleStatusChange(order._id, "completed")}>
                             مكتمل
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(order.id, "cancelled")}>
+                          <DropdownMenuItem onClick={() => handleStatusChange(order._id, "cancelled")}>
                             ملغي
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -233,13 +233,13 @@ export default function OrderManagementPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  سيتم حذف الطلب {order.id} نهائياً. لا يمكن التراجع عن هذا الإجراء.
+                                  سيتم حذف الطلب {order._id} نهائياً. لا يمكن التراجع عن هذا الإجراء.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDeleteOrder(order.id)}
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteOrder(order._id)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
                                   حذف
@@ -256,7 +256,7 @@ export default function OrderManagementPage() {
             </TableBody>
           </Table>
         </div>
-        
+
         {filteredOrders.length > 0 && (
           <div className="mt-4 text-sm text-slate-500 text-center">
             عرض {filteredOrders.length} من {allOrders.length} طلب

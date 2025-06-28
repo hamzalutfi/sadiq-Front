@@ -37,22 +37,23 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
-import { MoreHorizontal, FileDown, UserPlus, Users, Trash2, Edit, UserCheck, UserX } from "lucide-react"
+import { MoreHorizontal, FileDown, UserPlus, Users, Trash2, Edit, UserCheck, UserX, CloudFog } from "lucide-react"
 import { useAdmin } from "@/contexts/admin-context"
 import { useToast } from "@/hooks/use-toast"
 
 export default function UserManagementPage() {
-  const { getAllUsers, addUser, updateUser, deleteUser, suspendUser, activateUser } = useAdmin()
+  const { getAllUsers, addUser, updateUser, deleteUser, suspendUser, activateUser ,fetchUsers } = useAdmin()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false)
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "" })
-
   const allUsers = getAllUsers()
+  
+  console.log('users',allUsers);
   
   const filteredUsers = allUsers.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
@@ -87,7 +88,7 @@ export default function UserManagementPage() {
     }
 
     addUser({
-      name: newUser.name,
+      fullName: newUser.name,
       email: newUser.email,
       status: "active",
     })
@@ -254,16 +255,16 @@ export default function UserManagementPage() {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user._id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={user.name} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} alt={user.fullName} />
+                            <AvatarFallback>{user.fullName.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{user.name}</p>
-                            <p className="text-sm text-slate-500">ID: {user.id}</p>
+                            <p className="font-medium">{user.fullName}</p>
+                            <p className="text-sm text-slate-500">ID: {user._id}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -287,17 +288,17 @@ export default function UserManagementPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>إجراءات</DropdownMenuLabel>
-                            <DropdownMenuItem>
+                            {/* <DropdownMenuItem >
                               <Edit className="h-4 w-4 ml-2" />
                               تعديل المستخدم
-                            </DropdownMenuItem>
-                            {user.status === "active" ? (
-                              <DropdownMenuItem onClick={() => handleSuspendUser(user.id, user.name)}>
+                            </DropdownMenuItem> */}
+                            {user.isActive ? (
+                              <DropdownMenuItem onClick={() => handleSuspendUser(user._id, user.fullName)}>
                                 <UserX className="h-4 w-4 ml-2" />
                                 تعليق المستخدم
                               </DropdownMenuItem>
                             ) : (
-                              <DropdownMenuItem onClick={() => handleActivateUser(user.id, user.name)}>
+                              <DropdownMenuItem onClick={() => handleActivateUser(user._id, user.fullName)}>
                                 <UserCheck className="h-4 w-4 ml-2" />
                                 تفعيل المستخدم
                               </DropdownMenuItem>
@@ -314,13 +315,13 @@ export default function UserManagementPage() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    سيتم حذف المستخدم {user.name} نهائياً. لا يمكن التراجع عن هذا الإجراء.
+                                    سيتم حذف المستخدم {user.fullName} نهائياً. لا يمكن التراجع عن هذا الإجراء.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>إلغاء</AlertDialogCancel>
                                   <AlertDialogAction 
-                                    onClick={() => handleDeleteUser(user.id, user.name)}
+                                    onClick={() => handleDeleteUser(user._id, user.fullName)}
                                     className="bg-red-600 hover:bg-red-700"
                                   >
                                     حذف

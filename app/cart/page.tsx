@@ -28,7 +28,7 @@ export default function CartPage() {
     }
   }
 
-  if (cartItems.length === 0) {
+  if (cartItems?.length === 0) {
     return (
       <div className="container py-12 md:py-20 text-center">
         <ShoppingBag className="h-24 w-24 mx-auto text-slate-300 mb-6" />
@@ -51,40 +51,38 @@ export default function CartPage() {
           {/* Cart Items - Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {cartItems.map((item) => (
-              <Card key={item.id} className="overflow-hidden shadow-sm">
+              <Card key={item._id} className="overflow-hidden shadow-sm">
                 <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4">
                   <div className="relative w-24 h-28 sm:w-20 sm:h-24 bg-slate-100 rounded-md overflow-hidden flex-shrink-0">
-                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill style={{ objectFit: "cover" }} />
+                    <Image src={item.image || (typeof item.product.image === 'string' ? item.product.image : "/placeholder.svg")} alt={item.name || item.product.name} fill style={{ objectFit: "cover" }} />
                   </div>
-                  <div className="flex-grow text-center sm:text-right">
-                    <h2 className="text-lg font-semibold text-slate-800">{item.name}</h2>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900 truncate">{item.name || item.product.name}</h3>
                     {item.optionLabel && <p className="text-sm text-slate-500">{item.optionLabel}</p>}
-                    {item.platform && <p className="text-sm text-slate-500">{item.platform}</p>}
-                    <p className="text-md font-bold text-primary mt-1 sm:hidden">
-                      {(item.price * item.quantity).toFixed(2)} ر.س
-                    </p>
+                    <p className="text-sm text-slate-500">{item.platform || item.product.category}</p>
+                    <p className="font-semibold text-primary mt-1">{(item.price || item.product.price || 0).toFixed(2)}ل.س</p>
                   </div>
                   <div className="flex items-center space-x-3 space-x-reverse my-2 sm:my-0">
-                    <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                    <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}>
                       <PlusCircle className="h-5 w-5 text-slate-500 hover:text-primary" />
                     </Button>
                     <span className="text-md font-medium w-8 text-center">{item.quantity}</span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                       disabled={item.quantity <= 1}
                     >
                       <MinusCircle className="h-5 w-5 text-slate-500 hover:text-primary" />
                     </Button>
                   </div>
                   <p className="text-md font-bold text-primary hidden sm:block w-24 text-left">
-                    {(item.price * item.quantity).toFixed(2)} ر.س
+                    {((item.price || item.product.price || 0) * item.quantity).toFixed(2)}ل.س
                   </p>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item._id)}
                     className="text-slate-400 hover:text-red-500"
                   >
                     <Trash2 className="h-5 w-5" />
@@ -103,18 +101,18 @@ export default function CartPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between text-slate-600">
                   <span>الإجمالي الفرعي</span>
-                  <span>{subtotal.toFixed(2)} ر.س</span>
+                  <span>{subtotal.toFixed(2)}ل.س</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>الخصم (كوبون)</span>
-                    <span>-{discount.toFixed(2)} ر.س</span>
+                    <span>-{discount.toFixed(2)}ل.س</span>
                   </div>
                 )}
                 <Separator />
                 <div className="flex justify-between text-xl font-bold text-slate-900">
                   <span>الإجمالي النهائي</span>
-                  <span>{total.toFixed(2)} ر.س</span>
+                  <span>{total.toFixed(2)}ل.س</span>
                 </div>
                 <div className="pt-2 space-y-2">
                   <label htmlFor="coupon" className="text-sm font-medium text-slate-700">

@@ -89,7 +89,7 @@ function DashboardContent() {
             <CardContent>
               <div className="text-2xl font-bold">{getCartCount()}</div>
               <p className="text-xs text-muted-foreground">
-                {getCartCount() === 0 ? "لا توجد منتجات في السلة" : `${getCartTotal().toFixed(2)} ر.س`}
+                {getCartCount() === 0 ? "لا توجد منتجات في السلة" : `${getCartTotal().toFixed(2)}ل.س`}
               </p>
             </CardContent>
           </Card>
@@ -189,11 +189,11 @@ function DashboardContent() {
             <CardContent>
               <div className="space-y-4">
                 {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                  <div key={order._id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-slate-900">طلب #{order.id}</h4>
+                          <h4 className="font-medium text-slate-900">طلب #{order._id}</h4>
                           <Badge className={getStatusColor(order.status)}>
                             {getStatusText(order.status)}
                           </Badge>
@@ -204,8 +204,8 @@ function DashboardContent() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-900">{order.total.toFixed(2)} ر.س</span>
-                      <Link href={`/order-success/${order.id}`}>
+                      <span className="font-semibold text-slate-900">{order.pricing.total.toFixed(2)}ل.س</span>
+                      <Link href={`/order-success/${order._id}`}>
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4 ml-1" />
                           عرض

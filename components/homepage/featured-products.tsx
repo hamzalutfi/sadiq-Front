@@ -45,9 +45,9 @@ export default function FeaturedProducts() {
         >
           <CarouselContent className="-ml-4">
             {featuredProducts.map((product) => (
-              <CarouselItem key={product.id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+              <CarouselItem key={product._id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
                 <Card className="group overflow-hidden rounded-xl border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-                  <Link href={`/product/${product.id}`} className="block h-full flex flex-col">
+                  <Link href={`/product/${product._id}`} className="block h-full flex flex-col">
                     <div className="relative w-full h-48 bg-slate-100 rounded-t-lg overflow-hidden">
                       <Image src={product.image} alt={product.name} fill style={{ objectFit: "cover" }} />
                       <div className="absolute top-2 left-2 bg-primary/80 text-white text-xs px-2 py-1 rounded">
@@ -80,9 +80,9 @@ export default function FeaturedProducts() {
                       <div className="mt-auto">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-baseline gap-2">
-                            <span className="text-xl font-bold text-primary">{product.price.toFixed(2)} ر.س</span>
+                            <span className="text-xl font-bold text-primary">{product.price.toFixed(2)}ل.س</span>
                             {product.originalPrice && product.originalPrice > product.price && (
-                              <span className="text-sm text-slate-400 line-through">{product.originalPrice.toFixed(2)} ر.س</span>
+                              <span className="text-sm text-slate-400 line-through">{product.originalPrice.toFixed(2)}ل.س</span>
                             )}
                           </div>
                         </div>
@@ -92,7 +92,7 @@ export default function FeaturedProducts() {
                           onClick={(e) => {
                             e.preventDefault()
                             addToCart({
-                              id: product.id,
+                              id: product._id,
                               name: product.name,
                               price: product.price,
                               image: product.image,

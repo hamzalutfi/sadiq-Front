@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 import { redirect } from "next/navigation"
+import { authAPI } from "@/lib/api"
 
 // تعريف مخطط التحقق باستخدام Zod
 const signupSchema = z
@@ -14,6 +15,7 @@ const signupSchema = z
       .regex(/[A-Z]/, { message: "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل" })
       .regex(/[0-9]/, { message: "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل" }),
     confirmPassword: z.string(),
+    phoneNumber: z.string().min(10, { message: "يجب أن يكون رقم الهاتف 10 أرقام على الأقل" }),
     terms: z.literal("on", {
       errorMap: () => ({ message: "يجب الموافقة على الشروط والأحكام" }),
     }),
@@ -35,34 +37,27 @@ export async function signup(prevState: any, formData: FormData) {
     return { errors }
   }
 
-  const { name, email, password } = parsed.data
+  const { name, email, password, phoneNumber } = parsed.data
 
-  // --- منطق التعامل مع قاعدة البيانات ---
-  // 1. التحقق مما إذا كان البريد الإلكتروني مسجلاً مسبقاً
-  // مثال: const existingUser = await db.user.findUnique({ where: { email } });
-  // if (existingUser) {
-  //   return { message: 'هذا البريد الإلكتروني مسجل بالفعل' };
-  // }
+  try {
+    const response = await authAPI.register({
+      fullName: name,
+      email,
+      password,
+      phoneNumber
+    })
 
-  // 2. تشفير كلمة المرور (مهم جداً للأمان)
-  // استخدم مكتبة مثل bcrypt
-  // const hashedPassword = await bcrypt.hash(password, 10);
-
-  // 3. إنشاء المستخدم في قاعدة البيانات
-  // await db.user.create({
-  //   data: {
-  //     name,
-  //     email,
-  //     password: hashedPassword,
-  //   },
-  // });
-  // ------------------------------------
-
-  // محاكاة للنجاح
-  console.log("User created successfully:", { name, email })
-
-  // بعد النجاح، قم بتوجيه المستخدم
-  redirect("/welcome") // أو إلى صفحة تفعيل الحساب
+    if (response.success) {
+      // Store token in cookies for server-side access
+      // Note: In a real app, you'd use Next.js cookies API
+      redirect("/welcome")
+    } else {
+      return { message: response.error || 'فشل إنشاء الحساب' }
+    }
+  } catch (error) {
+    console.error('Signup error:', error)
+    return { message: 'حدث خطأ أثناء إنشاء الحساب' }
+  }
 }
 
 // --- Login Action ---
@@ -85,24 +80,20 @@ export async function login(prevState: any, formData: FormData) {
 
   const { email, password } = parsed.data
 
-  // --- منطق التعامل مع قاعدة البيانات ---
-  // 1. البحث عن المستخدم عبر البريد الإلكتروني
-  // const user = await db.user.findUnique({ where: { email } });
-  // if (!user) {
-  //   return { message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
-  // }
-  // 2. مقارنة كلمة المرور المشفرة
-  // const passwordMatch = await bcrypt.compare(password, user.password);
-  // if (!passwordMatch) {
-  //   return { message: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
-  // }
-  // 3. إنشاء جلسة أو Token
-  // ...
-  // ------------------------------------
+  try {
+    const response = await authAPI.login({ email, password })
 
-  // محاكاة للنجاح
-  console.log("User logged in successfully:", { email })
-  redirect("/dashboard") // توجيه إلى لوحة التحكم أو الصفحة الرئيسية
+    if (response.success) {
+      // Store token in cookies for server-side access
+      // Note: In a real app, you'd use Next.js cookies API
+      redirect("/dashboard")
+    } else {
+      return { message: response.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة' }
+    }
+  } catch (error) {
+    console.error('Login error:', error)
+    return { message: 'حدث خطأ أثناء تسجيل الدخول' }
+  }
 }
 
 // --- Forgot Password Action ---
@@ -120,23 +111,20 @@ export async function requestPasswordReset(prevState: any, formData: FormData) {
 
   const { email } = parsed.data
 
-  // --- منطق التعامل مع قاعدة البيانات ---
-  // 1. تحقق من وجود المستخدم
-  // const user = await db.user.findUnique({ where: { email } });
-  // if (user) {
-  //   // 2. إنشاء رمز تحقق فريد ومؤقت
-  //   const token = crypto.randomBytes(32).toString("hex");
-  //   const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 دقائق
-  //   // await db.passwordResetToken.create({ data: { email, token, expires } });
-  //   // 3. إرسال البريد الإلكتروني
-  //   // await sendPasswordResetEmail(email, token);
-  // }
-  // ------------------------------------
+  try {
+    const response = await authAPI.forgotPassword(email)
 
-  // لأسباب أمنية، نعرض دائماً رسالة نجاح
-  return {
-    success: true,
-    message: "إذا كان بريدك الإلكتروني مسجلاً لدينا، فستتلقى رابطاً لإعادة تعيين كلمة المرور قريباً.",
+    if (response.success) {
+      return {
+        success: true,
+        message: "إذا كان بريدك الإلكتروني مسجل لدينا، فستتلقى رابطاً لإعادة تعيين كلمة المرور قريباً.",
+      }
+    } else {
+      return { message: response.error || 'حدث خطأ أثناء إرسال رابط إعادة تعيين كلمة المرور' }
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    return { message: 'حدث خطأ أثناء إرسال رابط إعادة تعيين كلمة المرور' }
   }
 }
 
@@ -170,20 +158,16 @@ export async function resetPassword(prevState: any, formData: FormData) {
 
   const { password, token } = parsed.data
 
-  // --- منطق التعامل مع قاعدة البيانات ---
-  // 1. البحث عن الرمز في قاعدة البيانات
-  // const savedToken = await db.passwordResetToken.findUnique({ where: { token } });
-  // if (!savedToken || savedToken.expires < new Date()) {
-  //   return { message: "الرمز غير صالح أو انتهت صلاحيته." };
-  // }
-  // 2. تشفير كلمة المرور الجديدة
-  // const hashedPassword = await bcrypt.hash(password, 10);
-  // 3. تحديث كلمة مرور المستخدم
-  // await db.user.update({ where: { email: savedToken.email }, data: { password: hashedPassword } });
-  // 4. حذف الرمز المستخدم
-  // await db.passwordResetToken.delete({ where: { token } });
-  // ------------------------------------
+  try {
+    const response = await authAPI.resetPassword(token, password)
 
-  // توجيه إلى صفحة تسجيل الدخول مع رسالة نجاح
-  redirect("/login?reset=success")
+    if (response.success) {
+      redirect("/login?reset=success")
+    } else {
+      return { message: response.error || 'الرمز غير صالح أو انتهت صلاحيته' }
+    }
+  } catch (error) {
+    console.error('Reset password error:', error)
+    return { message: 'حدث خطأ أثناء إعادة تعيين كلمة المرور' }
+  }
 }

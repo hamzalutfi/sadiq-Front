@@ -1,170 +1,189 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { CartItem } from "@/contexts/cart-context"
-
-export interface OrderItem extends CartItem {
-  deliveredAt?: string
-  code?: string
-}
-
-export interface Order {
-  id: string
-  userId: string
-  items: OrderItem[]
-  subtotal: number
-  total: number
-  status: "pending" | "processing" | "completed" | "cancelled"
-  paymentMethod: string
-  customerInfo: {
-    email: string
-    firstName: string
-    lastName: string
-  }
-  createdAt: string
-  updatedAt: string
-  completedAt?: string
-}
+import { ordersAPI, Order } from "@/lib/api"
+import { useAuth } from "./auth-context"
 
 interface OrdersContextType {
   orders: Order[]
-  createOrder: (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">) => Promise<Order>
-  updateOrderStatus: (orderId: string, status: Order["status"]) => void
-  completeOrder: (orderId: string) => void
+  isLoading: boolean
+  error: string | null
+  fetchOrders: () => Promise<void>
+  createOrder: (orderData: { 
+    shippingAddress: string
+    billingAddress?: string
+    paymentMethod?: string
+    paymentDetails?: any
+  }) => Promise<{ success: boolean; message?: string; order?: Order }>
+  completeOrder: (orderId: string) => Promise<{ success: boolean; message?: string }>
+  getOrderById: (id: string) => Order | undefined
   getUserOrders: (userId: string) => Order[]
-  getOrderById: (orderId: string) => Order | undefined
+  cancelOrder: (id: string) => Promise<{ success: boolean; message?: string }>
+  requestRefund: (id: string) => Promise<{ success: boolean; message?: string }>
 }
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined)
 
-// Local storage key
-const ORDERS_STORAGE_KEY = "sadiqOrders"
-
-// Helper functions for local storage
-const getStoredOrders = (): Order[] => {
-  if (typeof window === "undefined") return []
-  
-  try {
-    const stored = localStorage.getItem(ORDERS_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch (error) {
-    console.error("Error reading orders from localStorage:", error)
-    return []
-  }
-}
-
-const setStoredOrders = (orders: Order[]) => {
-  if (typeof window === "undefined") return
-  
-  try {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders))
-  } catch (error) {
-    console.error("Error writing orders to localStorage:", error)
-  }
-}
-
 export function OrdersProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { isAuthenticated } = useAuth()
 
-  // Load orders from localStorage on mount
+  // Load orders when user is authenticated
   useEffect(() => {
-    const storedOrders = getStoredOrders()
-    setOrders(storedOrders)
-  }, [])
+    if (isAuthenticated) {
+      fetchOrders()
+    } else {
+      setOrders([])
+    }
+  }, [isAuthenticated])
 
-  // Save orders to localStorage whenever they change
-  useEffect(() => {
-    setStoredOrders(orders)
-  }, [orders])
+  const fetchOrders = async (): Promise<void> => {
+    if (!isAuthenticated) return
 
-  const createOrder = async (orderData: Omit<Order, "id" | "createdAt" | "updatedAt">): Promise<Order> => {
-    const newOrder: Order = {
-      ...orderData,
-      id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const response = await ordersAPI.getAll()
+
+      if (response.success && response.data) {
+        setOrders(response.data)
+      } else {
+        setError(response.error || 'فشل تحميل الطلبات')
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error)
+      setError('حدث خطأ أثناء تحميل الطلبات')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const createOrder = async (orderData: { 
+    shippingAddress: string
+    billingAddress?: string
+    paymentMethod?: string
+    paymentDetails?: any
+  }): Promise<{ success: boolean; message?: string; order?: Order }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لإنشاء طلب' }
     }
 
-    setOrders(prevOrders => [...prevOrders, newOrder])
-    return newOrder
-  }
+    try {
+      setIsLoading(true)
+      const response = await ordersAPI.create(orderData)
 
-  const updateOrderStatus = (orderId: string, status: Order["status"]) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order => {
-        if (order.id === orderId) {
-          const updatedOrder = {
-            ...order,
-            status,
-            updatedAt: new Date().toISOString(),
-          }
-          
-          // If order is completed, add completion timestamp
-          if (status === "completed" && !order.completedAt) {
-            updatedOrder.completedAt = new Date().toISOString()
-          }
-          
-          return updatedOrder
-        }
-        return order
-      })
-    )
-  }
-
-  const completeOrder = (orderId: string) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order => {
-        if (order.id === orderId) {
-          // Generate delivery codes for digital products
-          const itemsWithCodes = order.items.map(item => ({
-            ...item,
-            code: generateDeliveryCode(),
-            deliveredAt: new Date().toISOString(),
-          }))
-          
-          return {
-            ...order,
-            items: itemsWithCodes,
-            status: "completed" as const,
-            updatedAt: new Date().toISOString(),
-            completedAt: new Date().toISOString(),
-          }
-        }
-        return order
-      })
-    )
-  }
-
-  // Helper function to generate delivery codes
-  const generateDeliveryCode = (): string => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let result = ''
-    for (let i = 0; i < 16; i++) {
-      if (i > 0 && i % 4 === 0) result += '-'
-      result += chars.charAt(Math.floor(Math.random() * chars.length))
+      if (response.success && response.data) {
+        // Add new order to the list
+        setOrders(prev => [response.data!, ...prev])
+        return { success: true, order: response.data }
+      } else {
+        return { success: false, message: response.error || 'فشل إنشاء الطلب' }
+      }
+    } catch (error) {
+      console.error('Error creating order:', error)
+      return { success: false, message: 'حدث خطأ أثناء إنشاء الطلب' }
+    } finally {
+      setIsLoading(false)
     }
-    return result
+  }
+
+  const completeOrder = async (orderId: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لإكمال الطلب' }
+    }
+
+    try {
+      setIsLoading(true)
+      // For now, we'll just update the order status locally
+      // In a real implementation, you would call an API endpoint
+      setOrders(prev => prev.map(order =>
+        order._id === orderId 
+          ? { ...order, status: 'completed' as const }
+          : order
+      ))
+      return { success: true, message: 'تم إكمال الطلب بنجاح' }
+    } catch (error) {
+      console.error('Error completing order:', error)
+      return { success: false, message: 'حدث خطأ أثناء إكمال الطلب' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getOrderById = (_id: string): Order | undefined => {
+    return orders.find(order => order._id === _id)
   }
 
   const getUserOrders = (userId: string): Order[] => {
     return orders.filter(order => order.userId === userId)
   }
 
-  const getOrderById = (orderId: string): Order | undefined => {
-    return orders.find(order => order.id === orderId)
+  const cancelOrder = async (_id: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لإلغاء الطلب' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await ordersAPI.cancel(_id)
+
+      if (response.success && response.data) {
+        // Update order in the list
+        setOrders(prev => prev.map(order =>
+          order._id === _id ? response.data! : order
+        ))
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل إلغاء الطلب' }
+      }
+    } catch (error) {
+      console.error('Error canceling order:', error)
+      return { success: false, message: 'حدث خطأ أثناء إلغاء الطلب' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const requestRefund = async (_id: string): Promise<{ success: boolean; message?: string }> => {
+    if (!isAuthenticated) {
+      return { success: false, message: 'يجب تسجيل الدخول لطلب استرداد الأموال' }
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await ordersAPI.requestRefund(_id)
+
+      if (response.success) {
+        return { success: true }
+      } else {
+        return { success: false, message: response.error || 'فشل طلب استرداد الأموال' }
+      }
+    } catch (error) {
+      console.error('Error requesting refund:', error)
+      return { success: false, message: 'حدث خطأ أثناء طلب استرداد الأموال' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const value: OrdersContextType = {
+    orders,
+    isLoading,
+    error,
+    fetchOrders,
+    createOrder,
+    completeOrder,
+    getOrderById,
+    getUserOrders,
+    cancelOrder,
+    requestRefund
   }
 
   return (
-    <OrdersContext.Provider
-      value={{
-        orders,
-        createOrder,
-        updateOrderStatus,
-        completeOrder,
-        getUserOrders,
-        getOrderById,
-      }}
-    >
+    <OrdersContext.Provider value={value}>
       {children}
     </OrdersContext.Provider>
   )
@@ -173,7 +192,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 export function useOrders() {
   const context = useContext(OrdersContext)
   if (context === undefined) {
-    throw new Error("useOrders must be used within an OrdersProvider")
+    throw new Error('useOrders must be used within an OrdersProvider')
   }
   return context
 } 

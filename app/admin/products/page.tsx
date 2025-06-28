@@ -30,25 +30,33 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MoreHorizontal, PackagePlus, Edit, Trash2, KeyRound } from "lucide-react"
 import Image from "next/image"
-import { useProducts, type Product } from "@/contexts/products-context"
+import { useProducts } from "@/contexts/products-context"
 import { useToast } from "@/hooks/use-toast"
+import { getImageUrl } from "@/lib/utils"
+import type { Product } from "@/lib/api"
 
 const productCategories = ["بطاقات الألعاب", "اشتراكات الترفيه", "برامج وتطبيقات", "أخرى"]
+
+// Local interface for the admin form
+interface AdminProductForm {
+  name: string
+  image: string | File
+  price: number
+  category: string
+  description: string
+}
 
 export default function ProductManagementPage() {
   const { products, addProduct, deleteProduct } = useProducts()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false)
-  const [newProduct, setNewProduct] = useState<Omit<Product, "id">>({
+  const [newProduct, setNewProduct] = useState<AdminProductForm>({
     name: "",
     image: "/placeholder.svg?width=300&height=350",
     price: 0,
     category: productCategories[0],
     description: "",
-    availability: "متوفر",
-    availableCodes: 0,
-    totalCodes: 0,
   })
   const [initialCodes, setInitialCodes] = useState("")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -59,9 +67,9 @@ export default function ProductManagementPage() {
       product.category.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!newProduct.name || !newProduct.description || newProduct.price <= 0) {
       toast({
         title: "خطأ في البيانات",
@@ -71,40 +79,44 @@ export default function ProductManagementPage() {
       return
     }
 
-    const codesArray = initialCodes.split("\n").filter((code) => code.trim() !== "")
-    const productData: Omit<Product, "id"> = {
-      ...newProduct,
-      image: imagePreview || newProduct.image,
-      availableCodes: codesArray.length,
-      totalCodes: codesArray.length,
-      digitalCodes: codesArray.map((code, index) => ({
-        id: `code_${Date.now()}_${index}`,
-        code: code.trim(),
-        status: "available",
-      })),
+    // Check if we have a valid image file
+    const imageFile = newProduct.image instanceof File ? newProduct.image : undefined
+
+    const productData = {
+      name: newProduct.name,
+      price: newProduct.price,
+      category: newProduct.category,
+      description: newProduct.description,
+      productType: 'digital' as const,
+      image: imageFile
     }
 
-    addProduct(productData)
-    
-    // Reset form
-    setNewProduct({
-      name: "",
-      image: "/placeholder.svg?width=300&height=350",
-      price: 0,
-      category: productCategories[0],
-      description: "",
-      availability: "متوفر",
-      availableCodes: 0,
-      totalCodes: 0,
-    })
-    setInitialCodes("")
-    setImagePreview(null)
-    setIsAddProductDialogOpen(false)
-    
-    toast({
-      title: "تم إضافة المنتج بنجاح",
-      description: `تم إضافة المنتج ${productData.name} بنجاح`,
-    })
+    const result = await addProduct(productData)
+
+    if (result.success) {
+      // Reset form
+      setNewProduct({
+        name: "",
+        image: "/placeholder.svg?width=300&height=350",
+        price: 0,
+        category: productCategories[0],
+        description: "",
+      })
+      setInitialCodes("")
+      setImagePreview(null)
+      setIsAddProductDialogOpen(false)
+
+      toast({
+        title: "تم إضافة المنتج بنجاح",
+        description: `تم إضافة المنتج ${productData.name} بنجاح`,
+      })
+    } else {
+      toast({
+        title: "خطأ في إضافة المنتج",
+        description: result.message || "حدث خطأ أثناء إضافة المنتج",
+        variant: "destructive"
+      })
+    }
   }
 
   const handleDeleteProduct = (productId: string, productName: string) => {
@@ -118,17 +130,8 @@ export default function ProductManagementPage() {
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-        // Optionally, store the file object in state if you need to send it:
-        // setNewProduct({ ...newProduct, imageFile: file });
-      }
-      reader.readAsDataURL(file)
-      // For actual upload, you'd typically set the file object here
-      // and handle the upload in handleAddProduct or a separate function.
-      // For now, we're just showing a preview.
-      setNewProduct({ ...newProduct, image: file.name }) // Store filename for display or mock
+      setImagePreview(URL.createObjectURL(file))
+      setNewProduct({ ...newProduct, image: file })
     } else {
       setImagePreview(null)
       // setNewProduct({ ...newProduct, imageFile: null });
@@ -296,15 +299,15 @@ export default function ProductManagementPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="relative w-12 h-12 bg-slate-100 rounded-md overflow-hidden">
-                          <Image src={product.image} alt={product.name} fill style={{ objectFit: "cover" }} />
+                          <Image src={getImageUrl(product.images?.[0]?.url)} alt={product.name} fill style={{ objectFit: "cover" }} />
                         </div>
                         <span className="font-medium">{product.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{product.price.toFixed(2)} ر.س</TableCell>
-                    <TableCell className="hidden sm:table-cell">{product.category}</TableCell>
+                    <TableCell>{product.price.toFixed(2)}ل.س</TableCell>
+                    <TableCell className="hidden sm:table-cell">{product.category.name}</TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {product.availableCodes} / {product.totalCodes}
+                      {product.stock || 0} متوفر
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
