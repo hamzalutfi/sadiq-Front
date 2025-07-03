@@ -38,7 +38,7 @@ export default function Header() {
     { href: "/store", label: "المتجر" },
     { href: "/categories", label: "الفئات" },
     { href: "/offers", label: "العروض" },
-    { href: "/faq", label: "المساعدة" },
+    { href: "/about", label: "من نحن" },
   ]
 
   const cartItemCount = getCartCount()

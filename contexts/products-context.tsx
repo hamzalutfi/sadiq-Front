@@ -23,6 +23,7 @@ interface ProductsContextType {
     image?: File
   }) => Promise<{ success: boolean; message?: string }>
   deleteProduct: (id: string) => Promise<{ success: boolean; message?: string }>
+  updateProduct: (id: string, productData: Partial<Product>) => Promise<{ success: boolean; message?: string }>
 }
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined)
@@ -154,6 +155,21 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const updateProduct = async (_id: string, productData: Partial<Product>): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await productsAPI.update(_id, productData)
+      if (response.success) {
+        fetchProducts()
+        return { success: true }
+      } else {
+        return { success: false, message: response.error }
+      }
+    } catch (error) {
+      console.error('Error updating product:', error)
+      return { success: false, message: 'حدث خطأ أثناء تحديث المنتج' }
+    }
+  }
+
   const value: ProductsContextType = {
     products,
     categories,
@@ -166,7 +182,8 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     getCategoryById,
     getCategoryBySlug,
     addProduct,
-    deleteProduct
+    deleteProduct,
+    updateProduct
   }
 
   return (

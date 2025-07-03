@@ -49,7 +49,7 @@ function DashboardContent() {
     ...orders.slice(0, 3).map(order => ({
       type: "order",
       title: `طلب جديد #${order.id}`,
-      description: `قيمة الطلب: ${order.total.toFixed(2)}ل.س`,
+      description: `قيمة الطلب: ${order.pricing.total.toFixed(2)}ل.س`,
       date: new Date(order.createdAt).toLocaleDateString('ar-SA'),
       status: order.status
     }))
@@ -140,7 +140,7 @@ function DashboardContent() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold">{order.total.toFixed(2)}ل.س</div>
+                          <div className="font-semibold">{order.pricing.total.toFixed(2)}ل.س</div>
                           <Badge 
                             variant={
                               order.status === "مكتمل" ? "default" : 

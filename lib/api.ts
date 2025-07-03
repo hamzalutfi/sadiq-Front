@@ -318,7 +318,7 @@ export const authAPI = {
     email: string
     password: string
     phoneNumber: string
-  }): Promise<ApiResponse<AuthResponse>> => {
+  }): Promise<ApiResponse<AuthResponse>> => { //promise <AuthResponse>
     return apiCall<AuthResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),

@@ -29,7 +29,7 @@ export default function ReportsPage() {
   const paymentMethodData = allOrders.reduce((acc, order) => {
     const method = order.paymentMethod
     if (!acc[method]) acc[method] = 0
-    acc[method] += order.total
+    acc[method] += order.pricing.total
     return acc
   }, {} as Record<string, number>)
 
@@ -78,9 +78,9 @@ export default function ReportsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRevenue.toFixed(2)}ل.س</div>
+            <div className="text-2xl font-bold">{(stats?.totalRevenue || 0).toFixed(2)}ل.س</div>
             <p className="text-xs text-muted-foreground">
-              {stats.monthlyRevenue.toFixed(2)}ل.س هذا الشهر
+              {(stats?.monthlyRevenue || 0).toFixed(2)}ل.س هذا الشهر
             </p>
           </CardContent>
         </Card>
@@ -91,9 +91,9 @@ export default function ReportsPage() {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
+            <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.monthlyOrders} طلب هذا الشهر
+              {stats?.monthlyOrders || 0} طلب هذا الشهر
             </p>
           </CardContent>
         </Card>
@@ -104,9 +104,9 @@ export default function ReportsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.monthlyUsers} مستخدم جديد هذا الشهر
+              {stats?.monthlyUsers || 0} مستخدم جديد هذا الشهر
             </p>
           </CardContent>
         </Card>
@@ -117,7 +117,7 @@ export default function ReportsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.averageOrderValue.toFixed(2)}ل.س</div>
+            <div className="text-2xl font-bold">{(stats?.averageOrderValue || 0).toFixed(2)}ل.س</div>
             <p className="text-xs text-muted-foreground">
               متوسط قيمة الطلب الواحد
             </p>
@@ -158,7 +158,7 @@ export default function ReportsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -232,15 +232,15 @@ export default function ReportsPage() {
         <CardContent>
           <div className="space-y-4">
             {allOrders.slice(0, 10).map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={order._id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   <div>
                     <p className="font-medium text-sm">
-                      طلب جديد من {order.customerInfo.firstName} {order.customerInfo.lastName}
+                      طلب جديد من {typeof order.user === 'object' ? order.user.fullName : 'مستخدم'}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {new Date(order.createdAt).toLocaleDateString('ar-SA')} - {order.total.toFixed(2)}ل.س
+                      {new Date(order.createdAt).toLocaleDateString('ar-SA')} - {order.pricing.total.toFixed(2)}ل.س
                     </p>
                   </div>
                 </div>

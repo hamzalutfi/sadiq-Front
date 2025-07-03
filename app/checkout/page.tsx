@@ -28,6 +28,16 @@ import { useCart } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useOrders } from "@/contexts/orders-context";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 // Re-using CartItem interface from cart page
 interface CartItem {
@@ -72,6 +82,9 @@ export default function CheckoutPage() {
     firstName: user?.fullName?.split(" ")[0] || "",
     lastName: user?.fullName?.split(" ").slice(1).join(" ") || "",
   });
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [transferImage, setTransferImage] = useState<File | null>(null);
+  const [transferImagePreview, setTransferImagePreview] = useState<string | null>(null);
 
   // Redirect if cart is empty
   useEffect(() => {
@@ -91,6 +104,15 @@ export default function CheckoutPage() {
       }));
     }
   }, [user]);
+
+  // Show dialog when transfer is selected
+  useEffect(() => {
+    if (selectedPaymentMethod === "transfer") {
+      setShowTransferDialog(true);
+    } else {
+      setShowTransferDialog(false);
+    }
+  }, [selectedPaymentMethod]);
 
   const subtotal = cartItems.reduce((sum, item) => {
     const itemPrice = item.price || (typeof item.product === 'object' ? item.product.price : 0) || 0;
@@ -119,6 +141,13 @@ export default function CheckoutPage() {
     return true;
   };
 
+  // Handle image upload
+  const handleTransferImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setTransferImage(file);
+    setTransferImagePreview(file ? URL.createObjectURL(file) : null);
+  };
+
   const handlePayment = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -140,6 +169,17 @@ export default function CheckoutPage() {
         variant: "destructive"
       });
       router.push("/cart");
+      return;
+    }
+
+    // If transfer is selected, require image
+    if (selectedPaymentMethod === "transfer" && !transferImage) {
+      toast({
+        title: "صورة التحويل مطلوبة",
+        description: "يرجى رفع صورة إيصال التحويل قبل إتمام الطلب.",
+        variant: "destructive"
+      });
+      setShowTransferDialog(true);
       return;
     }
 
@@ -182,6 +222,11 @@ export default function CheckoutPage() {
         description: `تم إنشاء طلبك برقم: ${newOrder._id}`,
       });
 
+      // Redirect based on payment method
+      if (selectedPaymentMethod === "whatsapp") {
+        window.location.href = "https://wa.link/new9me";
+        return;
+      }
       // Redirect to order success page
       router.push(`/order-success/${newOrder._id}`);
 
@@ -231,6 +276,45 @@ export default function CheckoutPage() {
       </header>
 
       <main className="container py-8 md:py-12">
+        <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>رفع صورة إيصال التحويل</DialogTitle>
+              <DialogDescription>
+                يرجى رفع صورة إيصال التحويل البنكي لإتمام الطلب.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col items-center gap-4">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleTransferImageChange}
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+              />
+              {transferImagePreview && (
+                <img
+                  src={transferImagePreview}
+                  alt="معاينة صورة التحويل"
+                  className="rounded-md border w-40 h-40 object-contain"
+                />
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                onClick={() => setShowTransferDialog(false)}
+                disabled={!transferImage}
+              >
+                تم
+              </Button>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  إلغاء
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <div className="grid lg:grid-cols-2 gap-8 xl:gap-12">
           {/* Left Column: Order Summary & Payment */}
           <div className="lg:order-last">
@@ -364,7 +448,7 @@ export default function CheckoutPage() {
                     <Input
                       id="lastName"
                       name="lastName"
-                      placeholder="محمد"
+                      placeholder="حمزه"
                       value={formData.lastName}
                       onChange={handleInputChange}
                       required

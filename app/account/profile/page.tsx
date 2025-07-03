@@ -27,6 +27,7 @@ import {
   Clock
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { usersAPI } from "@/lib/api"
 
 export default function ProfilePage() {
   return (
@@ -53,9 +54,9 @@ function ProfileContent() {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || "",
+        name: user.fullName || "",
         email: user.email || "",
-        phone: user.phone || "",
+        phone: user.phoneNumber || "",
         address: user.address || ""
       })
     }
@@ -90,18 +91,28 @@ function ProfileContent() {
 
     setIsLoading(true)
     try {
-      updateUser({
-        name: formData.name.trim(),
+      const response = await usersAPI.updateProfile({
+        fullName: formData.name.trim(),
         email: formData.email.trim(),
-        phone: formData.phone.trim(),
+        phoneNumber: formData.phone.trim(),
         address: formData.address.trim()
       })
       
-      setIsEditing(false)
-      toast({
-        title: "تم التحديث",
-        description: "تم تحديث معلوماتك بنجاح"
-      })
+      if (response.success && response.data) {
+        // Update local state with the response from the database
+        updateUser(response.data)
+        setIsEditing(false)
+        toast({
+          title: "تم التحديث",
+          description: "تم تحديث معلوماتك بنجاح"
+        })
+      } else {
+        toast({
+          title: "خطأ",
+          description: response.error || "حدث خطأ أثناء تحديث المعلومات",
+          variant: "destructive"
+        })
+      }
     } catch (error) {
       toast({
         title: "خطأ",
@@ -115,9 +126,9 @@ function ProfileContent() {
 
   const handleCancel = () => {
     setFormData({
-      name: user?.name || "",
+      name: user?.fullName || "",
       email: user?.email || "",
-      phone: user?.phone || "",
+      phone: user?.phoneNumber || "",
       address: user?.address || ""
     })
     setIsEditing(false)
@@ -125,7 +136,7 @@ function ProfileContent() {
 
   // Calculate user statistics
   const totalOrders = orders.length
-  const totalSpent = orders.reduce((sum, order) => sum + order.total, 0)
+  const totalSpent = orders.reduce((sum, order) => sum + order.pricing.total, 0)
   const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0
   const memberSince = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('ar-SA') : "غير محدد"
 
@@ -171,7 +182,7 @@ function ProfileContent() {
                         className="mt-1"
                       />
                     ) : (
-                      <p className="text-slate-900 font-medium mt-1">{user?.name || "غير محدد"}</p>
+                      <p className="text-slate-900 font-medium mt-1">{user?. fullName|| "غير محدد"}</p>
                     )}
                   </div>
 
@@ -204,7 +215,7 @@ function ProfileContent() {
                         className="mt-1"
                       />
                     ) : (
-                      <p className="text-slate-900 font-medium mt-1">{user?.phone || "غير محدد"}</p>
+                      <p className="text-slate-900 font-medium mt-1">{user?.phoneNumber || "غير محدد"}</p>
                     )}
                   </div>
 
@@ -364,7 +375,7 @@ function ProfileContent() {
             </Card>
 
             {/* Quick Actions */}
-            <Card className="shadow-lg">
+            {/* <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">إجراءات سريعة</CardTitle>
               </CardHeader>
@@ -386,10 +397,12 @@ function ProfileContent() {
                   سجل النشاط
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>
     </div>
   )
 }
+
+

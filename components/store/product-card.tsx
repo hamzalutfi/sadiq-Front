@@ -46,7 +46,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
           <div className="flex items-center justify-between">
-            <p className="text-xl font-bold text-primary">{product.price.toFixed(2)}ل.س</p>
+            <p className="text-xl font-bold text-primary">{Math.round(product.price)}ل.س</p>
             {product.rating && (
               <div className="flex items-center text-sm text-slate-500">
                 <Star className="h-4 w-4 text-amber-400 fill-amber-400 mr-1" />
@@ -55,7 +55,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
           {product.originalPrice && (
-            <p className="text-sm text-slate-400 line-through mt-1">{product.originalPrice.toFixed(2)}ل.س</p>
+            <p className="text-sm text-slate-400 line-through mt-1">{Math.round(product.originalPrice)}ل.س</p>
           )}
         </CardContent>
         <CardFooter className="p-4 pt-0 mt-auto">

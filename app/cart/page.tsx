@@ -82,7 +82,9 @@ export default function CartPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => removeFromCart(item._id)}
+                    onClick={() => removeFromCart(
+                      typeof item.product === 'string' ? item.product : item.product._id
+                    )}
                     className="text-slate-400 hover:text-red-500"
                   >
                     <Trash2 className="h-5 w-5" />

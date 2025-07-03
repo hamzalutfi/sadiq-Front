@@ -8,7 +8,7 @@ export default function HeroSectionV3() {
       <div className="container grid lg:grid-cols-2 gap-12 items-center">
         <div className="text-center lg:text-right">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            أكوادك الرقمية.
+            اشتراكاتك الرقمية.
             <br />
             <span className="text-primary">فوراً وموثوقة.</span>
           </h1>
@@ -38,7 +38,7 @@ export default function HeroSectionV3() {
         </div>
         <div className="hidden lg:block relative">
           <Image
-            src="/logo.png"
+            src="/Image_fx (2).jpg"
             alt="بطاقات رقمية متنوعة"
             width={600}
             height={500}
