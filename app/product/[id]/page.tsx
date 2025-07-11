@@ -52,7 +52,7 @@ export default function ProductDetailPage() {
   // Set initial values when product loads
   useEffect(() => {
     if (product) {
-      setMainImage(product.images?.[0] || product.image)
+      setMainImage(product.images?.[0].url || product.image)
       if (product.options && product.options.length > 0) {
         setSelectedOptionSku(product.defaultOptionSku || product.options[0].sku)
       }

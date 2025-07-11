@@ -6,7 +6,7 @@ export const config = {
       process.env.NEXT_PUBLIC_API_URL ||
       "https://sadiq-backend-4.onrender.com/api/v1",
     timeout: 10000, // 10 seconds
-    backendUrl: "http://localhost:5000",
+    backendUrl: "http://localhost:5000/api/v1",
   },
 
   // App Configuration

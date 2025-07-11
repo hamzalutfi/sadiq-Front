@@ -1,74 +1,90 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Filter, Grid, List, Star, ShoppingCart } from "lucide-react"
-import ProductCard from "@/components/store/product-card"
-import StoreFilters from "@/components/store/store-filters"
-import { useProducts } from "@/contexts/products-context"
-import { useCart } from "@/contexts/cart-context"
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Filter, Grid, List, Star, ShoppingCart } from "lucide-react";
+import ProductCard from "@/components/store/product-card";
+import StoreFilters from "@/components/store/store-filters";
+import { useProducts } from "@/contexts/products-context";
+import { useCart } from "@/contexts/cart-context";
 
 export default function StorePage() {
-  const { products, getProductsByCategory, searchProducts } = useProducts()
-  const { addToCart } = useCart()
-  const searchParams = useSearchParams()
+  const { products, getProductsByCategory, searchProducts } = useProducts();
+  const { addToCart } = useCart();
+  const searchParams = useSearchParams();
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [sortBy, setSortBy] = useState<string>("name")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  console.log("products", products);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Get category from URL params
-  const categoryFromUrl = searchParams.get("category")
+  const categoryFromUrl = searchParams.get("category");
 
   useEffect(() => {
     if (categoryFromUrl) {
-      setSelectedCategory(categoryFromUrl)
+      setSelectedCategory(categoryFromUrl);
     }
-  }, [categoryFromUrl])
+  }, [categoryFromUrl]);
 
   // Filter and sort products
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = searchTerm === "" ||
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      searchTerm === "" ||
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory
+    const matchesCategory =
+      selectedCategory === "all" || product.category === selectedCategory;
 
-    return matchesSearch && matchesCategory
-  })
+    return matchesSearch && matchesCategory;
+  });
 
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return a.price - b.price
+        return a.price - b.price;
       case "price-high":
-        return b.price - a.price
+        return b.price - a.price;
       case "name":
-        return a.name.localeCompare(b.name, "ar")
+        return a.name.localeCompare(b.name, "ar");
       case "newest":
-        return new Date(b.id).getTime() - new Date(a.id).getTime()
+        return new Date(b.id).getTime() - new Date(a.id).getTime();
       default:
-        return 0
+        return 0;
     }
-  })
+  });
 
-  const categories = ["all", ...Array.from(new Set(products.map(p => p.category)))]
+  const categories = [
+    "all",
+    ...Array.from(new Set(products.map((p) => p.category))),
+  ];
 
   return (
     <div className="bg-slate-50 min-h-screen py-8 md:py-12">
       <div className="container">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">متجر المنتجات الرقمية</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            متجر المنتجات الرقمية
+          </h1>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            اكتشف مجموعة واسعة من البطاقات الرقمية، اشتراكات الألعاب، خدمات البث، والبرامج. تسليم فوري وآمن.
+            اكتشف مجموعة واسعة من البطاقات الرقمية، اشتراكات الألعاب، خدمات
+            البث، والبرامج. تسليم فوري وآمن.
           </p>
         </div>
 
@@ -87,7 +103,10 @@ export default function StorePage() {
             </div>
 
             {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="اختر الفئة" />
               </SelectTrigger>
@@ -138,7 +157,11 @@ export default function StorePage() {
         {/* Results Count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-slate-600">
-            تم العثور على <span className="font-semibold text-slate-900">{sortedProducts.length}</span> منتج
+            تم العثور على{" "}
+            <span className="font-semibold text-slate-900">
+              {sortedProducts.length}
+            </span>{" "}
+            منتج
           </p>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-slate-400" />
@@ -151,22 +174,31 @@ export default function StorePage() {
           <Card className="text-center py-12">
             <CardContent>
               <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700 mb-2">لم يتم العثور على منتجات</h3>
-              <p className="text-slate-500 mb-4">جرب تغيير معايير البحث أو الفئة</p>
-              <Button onClick={() => {
-                setSearchTerm("")
-                setSelectedCategory("all")
-                setPriceRange([0, 1000])
-              }}>
+              <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                لم يتم العثور على منتجات
+              </h3>
+              <p className="text-slate-500 mb-4">
+                جرب تغيير معايير البحث أو الفئة
+              </p>
+              <Button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedCategory("all");
+                  setPriceRange([0, 1000]);
+                }}
+              >
                 إعادة تعيين المرشحات
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className={`grid gap-6 ${viewMode === "grid"
-            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-            : "grid-cols-1"
-            }`}>
+          <div
+            className={`grid gap-6 ${
+              viewMode === "grid"
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                : "grid-cols-1"
+            }`}
+          >
             {sortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -174,5 +206,5 @@ export default function StorePage() {
         )}
       </div>
     </div>
-  )
+  );
 }
